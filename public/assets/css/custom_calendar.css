@@ -1,0 +1,209 @@
+.color-options {
+    display: flex;
+    gap: 22px;
+    margin-top: 10px;
+}
+
+.color-options input[type="radio"] {
+    display: none;
+}
+
+.color-circle {
+    display: inline-block;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border 0.2s ease;
+}
+
+.red   { background-color: #f44336;}
+.pink  { background-color: #ec407a;}
+.orange{ background-color: #ff9800;}
+.yellow{ background-color: #EBBD2C;}
+.peach { background-color: #ffb74d;}
+.lemon { background-color: #f9e045;}
+.green { background-color: #8bc34a;}
+.blue  { background-color: #29b6f6;}
+.purple{ background-color: #ba68c8;}
+.coffee{ background-color: #A18461;}
+
+.color-options input[type="radio"]:checked + .color-circle {
+    border: 2px solid black;
+}
+
+/*--- Begin calendar css ---*/
+.fc-day-today {
+    background-color: transparent !important;
+}
+
+.fc-event.dr-label {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 0 !important;
+}
+
+.fc-event.dr-label .fc-event-time,
+.fc-event.dr-label .fc-event-title {
+    display: none !important;
+}
+
+.fc-event.dr-label::after {
+    content: "DR";
+    font-size: 15px;
+    color: #A1A5B7;
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    font-weight: normal;
+}
+
+.fc-timegrid-slot {
+    border-top: 1px solid #ddd !important;
+}
+
+.fc-timegrid-slot.fc-timegrid-slot-minor {
+    border-top: none !important;
+}
+
+.fc-timegrid-slot.fc-timegrid-slot-major {
+    border-top: 1px solid #ddd !important;
+}
+
+.fc-timegrid-slot-lane {
+    border-left: 1px solid #ddd !important;
+}
+
+.fc-timegrid-slot-lane > div {
+    border-top: none !important;
+}
+.selected-event {
+    border: 4px solid #184e8c !important;
+    box-shadow: 0 0 4px #184e8c;
+    border-radius: 4px;
+}
+
+.fc-event {
+    position: relative;
+    overflow: visible;
+}
+
+.resize-bottom-handle,
+.resize-top-handle {
+    height: 6px;
+    width: 100px;
+    background: rgba(255, 255, 255);
+    cursor: ns-resize;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+    pointer-events: none; /* important */
+}
+
+.resize-bottom-handle {
+    bottom: 0;
+    margin-bottom: 3px;
+}
+
+.resize-top-handle {
+    top: 0;
+    margin-top: 3px;
+}
+
+/* Enable hover only when parent is hovered */
+.fc-event:hover .resize-bottom-handle,
+.fc-event:hover .resize-top-handle {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.rate-block {
+    padding-top: 10px !important;
+    position: relative;
+}
+
+.rate-block .fc-event-title,
+.rate-block .fc-event-time,
+.rate-block .fc-event-main {
+    line-height: 1.2;
+}
+
+.rate-block .delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 20;
+}
+
+.resize-time-label{
+    position: absolute;
+    background: #fff;
+    color: #000;
+    border: 1px solid #999;
+    padding: 2px 6px;
+    font-size: 12px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 9999;
+}
+
+.fc-event.dr-slot {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 15px;
+}
+/*--- End calendar css ---*/
+
+/*--- Begin lozenges css ---*/
+.lozenges {
+    display: flex;
+    flex-wrap: wrap;
+}
+.lozenge {
+    background: #9b9eae;
+    border-radius: 5px;
+    border: 1px solid #999999;
+    color: #ffffff;
+    display: flex;
+    margin: 5px;
+}
+.lozenge-checkbox {
+    background: #ffffff;
+    border-radius: 5px 0 0 5px;
+    padding: 5px;
+    width: 20px;
+}
+.lozenge-rate-details {
+    padding: 5px 10px;
+}
+.lozenge-rate-amounts {
+    font-size: 0.8rem;
+}
+.lozenge-actions {
+    border-left: 1px dotted #ffffff;
+    padding: 5px 10px;
+    text-align: center;
+}
+.lozenge-actions i {
+    display: block;
+    font-size: 20px;
+}
+.lozenge-actions i:first-child {
+    padding-bottom: 5px;
+}
+
+.lozenge-red   { background: #f44336;}
+.lozenge-pink  { background: #ec407a;}
+.lozenge-orange{ background: #ff9800;}
+.lozenge-yellow{ background: #EBBD2C;}
+.lozenge-peach { background: #ffb74d;}
+.lozenge-lemon { background: #f9e045;}
+.lozenge-green { background: #8bc34a;}
+.lozenge-blue  { background: #29b6f6;}
+.lozenge-purple{ background: #ba68c8;}
+/*--- End lozenges css ---*/

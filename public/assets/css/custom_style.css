@@ -1,0 +1,107 @@
+.status-radio-btn-padding {
+    padding: 6px 16px;
+}
+
+.fs-xxl-1 {
+    font-size: calc(1.3rem + .6vw) !important;
+}
+
+.fs-xxl-2 {
+    font-size: calc(1.275rem + .3vw) !important;
+}
+.fs-xxl-2x {
+    font-size: calc(1.325rem + .9vw) !important;
+}
+
+.fs-xxl-2qx {
+    font-size: calc(1.35rem + 1.2vw) !important;
+}
+
+.fs-xxl-3qx {
+    font-size: calc(1.45rem + 2.4vw) !important;
+}
+
+.red-border   { border: 1px solid #f44336; color: #f44336;}
+.pink-border  { border: 1px solid #ec407a; color: #ec407a;}
+.orange-border{ border: 1px solid #ff9800; color: #ff9800;}
+.yellow-border{ border: 1px solid #EBBD2C; color: #EBBD2C;}
+.peach-border { border: 1px solid #ffb74d; color: #ffb74d;}
+.lemon-border { border: 1px solid #f9e045; color: #f9e045;}
+.green-border { border: 1px solid #8bc34a; color: #8bc34a;}
+.blue-border  { border: 1px solid #29b6f6; color: #29b6f6;}
+.purple-border{ border: 1px solid #ba68c8; color: #ba68c8;}
+.coffee-border{ border: 1px solid #A18461; color: #A18461;}
+.gray-border{ border: 1px solid #bfbfbf; color: #bfbfbf;}
+
+.red-text   { color: #f44336;}
+.pink-text  { color: #ec407a;}
+.orange-text{ color: #ff9800;}
+.yellow-text{ color: #EBBD2C;}
+.peach-text { color: #ffb74d;}
+.lemon-text { color: #f9e045;}
+.green-text { color: #8bc34a;}
+.blue-text  { color: #29b6f6;}
+.purple-text{ color: #ba68c8;}
+.coffee-text{ color: #A18461;}
+.gray-border{ color: #bfbfbf;}
+
+.select2-results__group {
+    background-color: #d0d2db !important;
+}
+
+a.disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+.bg-confirm {
+    background-color: #50ce89;
+    border: 1px solid #50ce89;
+    color: #FFF;
+}
+
+.bg-invited {
+    background-color: #a7e6c4;
+    border: 1px solid #50ce89;
+    color: #50ce89;
+}
+
+.bg-available {
+    background-color: #eefaf3;
+    border: 1px solid #50ce89;
+    color: #50ce89;
+}
+
+.bg-o_job {
+    background-color: #fef9ec;
+    border: 1px solid #f2da82;
+    color: #f2da82;
+}
+
+.confirm-text { color: #FFF; }
+.invited-text { color: #FFF; }
+.available-text { color: #50ce89; }
+.o_job-text { color: #f2da82; }
+
+.kt_aside_toolbar{ border-bottom: 1px dotted #fff; }
+
+.aside-menu .menu>.menu-item{ padding: 0; }
+.aside-menu .menu-link {
+    min-width: auto !important;
+    overflow: visible !important;
+}
+
+.aside-menu .menu-title {
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+.aside-menu.flex-column-fluid {
+    flex-shrink: 1 !important;
+}
+#kt_aside_toggle.active {
+    background-color: transparent !important;
+    border: none !important;
+}
+.u-flip{
+    transform: scaleX(-1);
+}

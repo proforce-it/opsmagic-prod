@@ -1,0 +1,5 @@
+payroll_week,job_id,worker_id,bonus_type,bonus_pay
+38,1,2404001,picking_bonus,100
+38,2,2405001,attendance_bonus,200
+38,3,2405002,weekly_bonus,300
+38,3,2410002,my_bonus,400
