@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +46,8 @@ Route::get('/queue-work', function () {
     return 'Queue successfully work!';
 });
 
+Route::get('/create-payroll-week-date-entries', [App\Http\Controllers\Dashboards\CreatePayrollWeekDateEntries::class, 'index']);
+
 // UPDATE COST CENTRES NAME TO ID IN DATABASE
 Route::get('/update-site-cost-centres', [App\Http\Controllers\HomeController::class, 'updateSiteCostCentres']);
 Route::get('/update-client-job-worker-cost-centres', [App\Http\Controllers\HomeController::class, 'updateClientJobWorkerCostCentres']);
@@ -56,7 +58,14 @@ Route::get('/update-pickup-point-cost-centres', [App\Http\Controllers\HomeContro
 Route::get('/', function () { return view('theme.auth.partials.login'); });
 //Route::get('login', function () { return view('theme.auth.partials.login'); });
 
-Auth::routes();
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('password.update');
 
 Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('custom.forgot-password.form');
 Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('custom.forgot-password.email');
@@ -176,9 +185,11 @@ Route::middleware('auth')->group(function(){
     Route::post('/get-client-job-worker-transport', [App\Http\Controllers\Clients\ClientController::class, 'getClientJobWorkerTransport']);
     Route::post('/update-worker-transport-details', [App\Http\Controllers\Clients\ClientController::class, 'updateWorkerTransportDetails']);
     Route::get('/archive-client-job-worker/{id}', [App\Http\Controllers\Clients\ClientController::class, 'archiveClientJobWorker']);
+    Route::get('/un-archive-client-job-worker/{id}', [App\Http\Controllers\Clients\ClientController::class, 'unArchiveClientJobWorker']);
     Route::get('/confirm-client-job-worker-admin/{id}/{confirm_by}/{status}', [App\Http\Controllers\Clients\ClientController::class, 'confirmClientJobWorkerAdmin']);
     Route::post('/get-job-worker-availability', [App\Http\Controllers\Clients\ClientController::class, 'getJobWorkerAvailability']);
     Route::post('/action-on-worker-availability', [App\Http\Controllers\Clients\ClientController::class, 'actionOnWorkerAvailability']);
+    Route::post('/get-client-job-worker-future-confirm-and-invitation-shift', [App\Http\Controllers\Clients\ClientController::class, 'getClientJobWorkerFutureConfirmAndInvitationShift']);
 
     Route::post('/update-client-document-details', [App\Http\Controllers\Clients\ClientController::class, 'updateClientDocumentDetails']);
     Route::post('/update-client-other-document-details', [App\Http\Controllers\Clients\ClientController::class, 'updateClientOtherDocumentDetails']);
@@ -204,6 +215,9 @@ Route::middleware('auth')->group(function(){
     Route::post('/bulk-export-booking-calendar-sheet-confirm-worker', [App\Http\Controllers\Job\JobController::class, 'bulkExportBookingCalendarSheetConfirmWorker']);
     Route::post('/restore-declined-cancelled-worker', [App\Http\Controllers\Job\JobController::class, 'restoreDeclinedCancelledWorker']);
     Route::post('/linked-to-client-worker-add-into-job', [App\Http\Controllers\Job\JobController::class, 'linkedToClientWorkerAddIntoJob']);
+    Route::post('/copy-job-shift', [App\Http\Controllers\Job\JobController::class, 'copyJobShift']);
+    Route::post('/copy-job-shift-in-worker-availability', [App\Http\Controllers\Job\JobController::class, 'copyJobShiftInWorkerAvailability']);
+
 
     Route::get('/job-management', [App\Http\Controllers\Job\JobController::class, 'jobManagement'])->name('dashboard_job-management');
 
@@ -354,6 +368,13 @@ Route::middleware('auth')->group(function(){
     Route::post('/add-worker-to-new-created-group', [App\Http\Controllers\Workers\WorkerSearchController::class, 'addWorkerToNewCreatedGroup']);
 
     Route::post('/unlink-group-to-job-action', [App\Http\Controllers\Group\GroupController::class, 'unlinkGroupToJobAction']);
-    Route::get('/un-archive-client-job-worker/{id}', [App\Http\Controllers\Clients\ClientController::class, 'unArchiveClientJobWorker']);
+
+    Route::get('/absence-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'getAbsenceRequest'])->name('dashboard_absence-requests');
+    Route::post('/absence-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'storeAbsenceRequest']);
+    Route::post('/approved-pending-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'approvedPendingRequest']);
+    Route::post('/declined-pending-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'declinedPendingRequest']);
+
+    Route::get('/address-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'getAddressRequest'])->name('dashboard_address-requests');
+    Route::post('/address-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'storeAddressRequest']);
 
 });

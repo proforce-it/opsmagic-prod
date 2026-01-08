@@ -91,14 +91,14 @@
                                         <div class="d-flex align-self-center">
                                             @if($jobLine)
                                                 @foreach($jobLine as $jbRow)
-                                                    <span class="p-1 rounded-1 fw-bold fs-4 me-2 {{ $jbRow['color_code'] }}-border mb-2">
-                                                        <span class="text-dark me-2">{{ ($jbRow['job_line_client_requirements_details']) ? $jbRow['job_line_client_requirements_details'][0]['worker_requirement'] : 0 }}</span>
+                                                    <span class="p-1 rounded-1 fw-bold fs-6 me-2 {{ $jbRow['color_code'] }}-border mb-2">
+                                                        <span class="text-dark me-1">{{ ($jbRow['job_line_client_requirements_details']) ? $jbRow['job_line_client_requirements_details'][0]['worker_requirement'] : 0 }}</span>
                                                         {{ $jbRow['line_code'] }}
                                                     </span> &nbsp;
                                                 @endforeach
                                             @endif
-                                            <span class="p-1 rounded-1 fw-bold fs-4 me-2 gray-border mb-2">
-                                                <span class="text-dark me-2">
+                                            <span class="p-1 rounded-1 fw-bold fs-6 me-2 gray-border mb-2">
+                                                <span class="text-dark me-1">
                                                     {{ $shift['number_workers'] - collect($jobLine)->pluck('job_line_client_requirements_details')->flatten(1)->sum(function ($detail) { return (int) $detail['worker_requirement']; }) }}
                                                 </span>
                                                 NO LINE
@@ -123,17 +123,17 @@
                                         </label>
                                     </div>
 
-                                    <div class="d-flex align-self-center d-none" id="cwjc">
+                                    <div class="d-flex align-self-center d-none pt-3" id="cwjc">
                                         @if($jobLine)
                                             @foreach($jobLine as $jbRow)
-                                                <span class="p-1 rounded-1 fw-bold fs-4 me-2 {{ $jbRow['color_code'] }}-border mb-2">
-                                                    <span class="text-dark me-2">{{ collect($confirm_worker)->where('job_line_id', $jbRow['id'])->count() }}</span>
+                                                <span class="p-1 rounded-1 fw-bold fs-6 me-2 {{ $jbRow['color_code'] }}-border mb-2">
+                                                    <span class="text-dark me-1">{{ collect($confirm_worker)->where('job_line_id', $jbRow['id'])->count() }}</span>
                                                     {{ $jbRow['line_code'] }}
                                                 </span> &nbsp;
                                             @endforeach
                                         @endif
-                                        <span class="p-1 rounded-1 fw-bold fs-4 me-2 gray-border mb-2">
-                                            <span class="text-dark me-2">{{ collect($confirm_worker)->where('job_line_id', null)->count() }}</span>
+                                        <span class="p-1 rounded-1 fw-bold fs-6 me-2 gray-border mb-2">
+                                            <span class="text-dark me-1">{{ collect($confirm_worker)->where('job_line_id', null)->count() }}</span>
                                             NO LINE
                                         </span>
                                     </div>
@@ -555,8 +555,8 @@
                                                     <select name="shift_worker_duration" id="shift_worker_duration" class="form-select" data-control="select2" data-placeholder="Choose..." data-allow-clear="true">
                                                         <option value="">Choose...</option>
                                                         @for ($hour = 1; $hour <= 12; $hour++)
-                                                            @foreach (['00', '15', '30', '45'] as $minute)
-                                                                @php($value = $hour . ($minute != '00' ? '.' . $minute : '.00'))
+                                                            @foreach (['00', '25', '50', '75'] as $minute)
+                                                                @php($value = $hour.'.'.$minute)
                                                                 <option value="{{ $value }}" {{ $value == $currentDuration ? 'selected' : '' }}>
                                                                     {{ $value }}
                                                                 </option>
@@ -657,9 +657,9 @@
                                                                     <div class="d-flex align-items-center">
                                                                         <a href="{{ url('view-worker-details/'.$avw['worker_id']) }}" class="text-dark fw-bolder text-hover-primary d-block fs-6 me-2" target="_blank">
                                                                             {{ $avw['worker']['first_name'].' '.$avw['worker']['middle_name'].' '.$avw['worker']['last_name'] }}
-                                                                            @if(\App\Models\Job\JobShiftWorker::query()->where('shift_date', $shift['date'])->where('worker_id', $avw['worker']['id'])->whereNotNull('confirmed_at')->whereNull('declined_at')->whereNull('cancelled_at')->first())
+                                                                            {{--@if(\App\Models\Job\JobShiftWorker::query()->where('shift_date', $shift['date'])->where('worker_id', $avw['worker']['id'])->whereNotNull('confirmed_at')->whereNull('declined_at')->whereNull('cancelled_at')->first())
                                                                                 <i class="fs-2 las la-exclamation-triangle text-warning"></i>
-                                                                            @endif
+                                                                            @endif--}}
                                                                         </a>
                                                                         <span class="fs-7 text-muted fw-bold"><span class="fw-boldest text-muted">b.</span>{{\Illuminate\Support\Carbon::parse($avw['worker']['date_of_birth'])->format('d/m/y')}}</span>
                                                                     </div>

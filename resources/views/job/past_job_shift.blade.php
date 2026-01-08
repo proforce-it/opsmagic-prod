@@ -61,11 +61,11 @@
 
                     <div class="row mt-5">
                         <div class="col-lg-6">
-                            <label class="fs-4 fw-boldest {{ (count($confirm_worker) > $shift['number_workers']) ? 'text-danger' : '' }} ">Assigned workers ({{ $shift['number_workers'] }})</label>
+                            <label class="fs-4 fw-boldest {{ (count($pastDateConfirm_worker) > $shift['number_workers']) ? 'text-danger' : '' }} ">Assigned workers ({{ $shift['number_workers'] }})</label>
                             <div class="fv-row fv-plugins-icon-container border border-gray-600 border-dashed rounded p-5 mb-5">
                                 <div class="row">
-                                    @if($confirm_worker)
-                                        @foreach($confirm_worker as $cow)
+                                    @if($pastDateConfirm_worker)
+                                        @foreach($pastDateConfirm_worker as $cow)
                                             <div class="col-lg-12 mb-3">
                                                 <div class="fv-row fv-plugins-icon-container border border-gray-300 rounded p-2">
                                                     <div class="row">
@@ -75,6 +75,10 @@
                                                             @endif
                                                             <span class="text-muted fw-bold text-muted d-flex fs-7 align-items-center">
                                                                 <span class="badge badge-success">C</span>
+                                                                @if($cow['client_job_worker'] && $cow['client_job_worker']['archived_at'])
+                                                                    <span class="badge badge-primary ms-2">Unlinked</span>
+                                                                @endif
+
                                                                  @if($cow['job_line_details'])
                                                                     <span class="p-1 rounded-1 fw-bold {{ $cow['job_line_details']['color_code'] }}-border ms-2">{{ $cow['job_line_details']['line_code'] }}</span>
                                                                 @endif

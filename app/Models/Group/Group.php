@@ -2,6 +2,7 @@
 
 namespace App\Models\Group;
 
+use App\Models\Client\ClientJob;
 use App\Models\Worker\Worker;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,5 +39,10 @@ class Group extends Model
             ->withTimestamps()
             ->withPivot('deleted_at')
             ->wherePivotNull('deleted_at');
+    }
+
+    public function jobs()
+    {
+        return $this->belongsToMany(ClientJob::class, 'group_with_jobs', 'group_id', 'job_id');
     }
 }

@@ -247,6 +247,7 @@
                         updateAlertSection("expiring_rtws", alert_section.expiring_rtws);
                         updateAlertSection("shift_workers_without_payroll", alert_section.shift_workers_without_payroll);
                         updateAlertSection("workers_worked_greater_than_12_days", alert_section.workers_worked_greater_than_12_days);
+                        updateAlertSection("workers_worked_greater_than_12_days_2", alert_section.workers_worked_greater_than_12_days_2);
 
                         let weekSnapshot = result.week_snapshot_section;
                         const weekSnapshotMappings = {

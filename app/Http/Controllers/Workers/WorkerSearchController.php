@@ -7,6 +7,7 @@ use App\Helper\Workers\WorkerHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Client\Client;
 use App\Models\Client\ClientJob;
+use App\Models\Client\ClientJobWorker;
 use App\Models\Client\Site;
 use App\Models\Group\CostCentre;
 use App\Models\Group\Group;
@@ -18,6 +19,7 @@ use App\My_response\Traits\Response\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -302,6 +304,7 @@ class WorkerSearchController extends Controller
     }
 
     public function addWorkerToExistingGroup(Request $request) {
+        DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
                 'existing_group_name' => 'required'
@@ -319,35 +322,97 @@ class WorkerSearchController extends Controller
                 throw new \Exception('Please select at lest one worker to perform this action.');
             }
 
-            $group = Group::query()->where('id', $groupId)->first();
+            $group = Group::query()->where('id', $groupId)->with(['jobs'])->first();
             if (!$group) {
                 throw new \Exception('Group details not found, please try again later.');
             }
 
-            $addedCount = 0;
+            if ($request->input('create_type') == 0) {
+                $jobNames = $group->jobs
+                    ->map(fn ($job) => '- ' . $job->name)
+                    ->implode('<br>');
 
-            foreach ($workerIds as $workerId) {
-                $exists = GroupWithWorker::query()->where('group_id', $groupId)
-                    ->where('worker_id', $workerId)
-                    ->exists();
-
-                if (!$exists) {
-                    GroupWithWorker::query()->create([
-                        'group_id'  => $groupId,
-                        'worker_id' => $workerId,
+                if ($jobNames != '') {
+                    return self::responseWithSuccess('selected_group_details_fetched', [
+                        'group_name' => $group['name'],
+                        'job_name' => $jobNames
                     ]);
-                    $addedCount++;
+                }
+
+                $addedCount = $this->addWorkerIntoGroup($workerIds, $groupId);
+                if ($addedCount === 0) {
+                    throw new \Exception('All selected workers are already part of ' . $group->name . ' group.');
+                }
+
+                DB::commit();
+                return self::responseWithSuccess($addedCount . ' workers successfully added into ' . $group->name . ' group.');
+            }
+
+            if ($request->input('link_worker_to_job_using_group_type') == 'link_to_existing_job') {
+                foreach ($group->jobs->pluck('id')->values() as $jobId) {
+
+                    $job = ClientJob::query()->where('id', $jobId)->first();
+                    if (!$job) {
+                        throw new \Exception('Job details not found, please try again later.');
+                    }
+
+                    foreach ($workerIds as $workerId) {
+                        $ClientJobWorker = ClientJobWorker::query()->where('job_id', $jobId)
+                            ->where('worker_id', $workerId)
+                            ->first();
+
+                        if ($ClientJobWorker) {
+                            if ($ClientJobWorker['declined_at'] || $ClientJobWorker['archived_at']) {
+                                ClientJobWorker::query()->where('id', $ClientJobWorker['id'])->update([
+                                    'invitation_type' => 2,
+                                    'confirmed_at' => Carbon::now(),
+                                    'confirmed_by_admin_user_id' => Auth::id(),
+                                    'declined_at' => null,
+                                    'archived_at' => null
+                                ]);
+                            }
+                        } else {
+                            ClientJobWorker::query()->create([
+                                'job_id' => $jobId,
+                                'worker_id' => $workerId,
+                                'invitation_type' => 2,
+                                'confirmed_at' => Carbon::now(),
+                                'confirmed_by_admin_user_id' => Auth::id(),
+                            ]);
+                        }
+                    }
                 }
             }
 
+            $addedCount = $this->addWorkerIntoGroup($workerIds, $groupId);
             if ($addedCount === 0) {
                 throw new \Exception('All selected workers are already part of ' . $group->name . ' group.');
             }
 
+            DB::commit();
             return self::responseWithSuccess($addedCount . ' workers successfully added into ' . $group->name . ' group.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
+    }
+
+    public function addWorkerIntoGroup($workerIds, $groupId) {
+        $addedCount = 0;
+        foreach ($workerIds as $workerId) {
+            $exists = GroupWithWorker::query()->where('group_id', $groupId)
+                ->where('worker_id', $workerId)
+                ->exists();
+
+            if (!$exists) {
+                GroupWithWorker::query()->create([
+                    'group_id'  => $groupId,
+                    'worker_id' => $workerId,
+                ]);
+                $addedCount++;
+            }
+        }
+        return $addedCount;
     }
 
     public function addWorkerToNewCreatedGroup(Request $request) {

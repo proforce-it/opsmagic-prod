@@ -932,21 +932,51 @@
 
         $(document).on('click', '#archive_job_worker', function () {
             let id = $(this).attr('data-job_worker_id');
-            sweetAlertUnlink('Do you want to unlink '+$(this).attr('data-worker_name')+' from this job').then((result) => {
-                if (result.value) {
-                    $.ajax({
-                        type    : 'get',
-                        url     : '{{ url('archive-client-job-worker') }}'+'/'+id,
-                        success : function (response) {
-                            decodeResponse(response)
-                            if(response.code === 200) {
-                                worker_table.ajax.reload();
-                            }
-                        },
-                        error : function (response) {
-                            toastr.error(response.statusText);
+
+            let unlink_worker_name = $(this).attr('data-worker_name');
+            let nameBeforeSpace = unlink_worker_name.match(/^\S+/);
+            let unlink_worker_first_name = nameBeforeSpace ? nameBeforeSpace[0] : unlink_worker_name;
+
+            $.ajax({
+                type        : 'post',
+                url         : '{{ url('get-client-job-worker-future-confirm-and-invitation-shift') }}',
+                data        : {
+                    _token  : '{{ csrf_token() }}',
+                    worker_id : $(this).attr('data-worker_id'),
+                    job_id : '{{ $job['id'] }}'
+                },
+                success     : function (response) {
+                    if(response.code === 200) {
+                        let title = 'Unlink '+unlink_worker_name+' from this job?';
+                        let text = '<p>You will no longer be able add '+unlink_worker_first_name+' to shifts for this job.</p>'
+
+                        if (response.data.total_count > 0) {
+                            text += "<p>Unlinking "+unlink_worker_first_name+" will also cancel "+unlink_worker_first_name+"’s "+response.data.confirmed_shift_count+" future confirmed shifts and "+response.data.invitation_shift_count+" shift invitations for {{ $job['name'] }}.</p>";
                         }
-                    });
+
+                        sweetAlertUnlink(title, text).then((result) => {
+                            if (result.value) {
+                                $.ajax({
+                                    type    : 'get',
+                                    url     : '{{ url('archive-client-job-worker') }}'+'/'+id,
+                                    success : function (response) {
+                                        decodeResponse(response)
+                                        if(response.code === 200) {
+                                            worker_table.ajax.reload();
+                                        }
+                                    },
+                                    error : function (response) {
+                                        toastr.error(response.statusText);
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error   : function (response) {
+                    toastr.error(response.statusText);
                 }
             });
         });

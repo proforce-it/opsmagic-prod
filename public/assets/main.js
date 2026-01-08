@@ -70,10 +70,10 @@ function sweetAlertUnarchived(text = "you want to un-archived selected records?"
     })
 }
 
-function sweetAlertUnlink(text = "you want to unlink selected records?") {
+function sweetAlertUnlink(title= "Are you sure?", text = "you want to unlink selected records?") {
     return Swal.fire({
-        title               : "Are you sure?",
-        text                : text,
+        title               : title,
+        html                : text,
         icon                : "warning",
         showCancelButton    : true,
         buttonsStyling      : false,
@@ -103,7 +103,6 @@ function sweetAlertRelink(text = "you want to relink selected records?") {
 }
 
 function decodeResponse(response) {
-    let i;
     if(response.code === 200) {
         toastr.success(response.message);
     } else if(response.code === 500) {
@@ -117,11 +116,37 @@ function decodeResponse(response) {
             }
             $("#" + inputId + "_error").empty().append(response.data[key][0]);
         });
-        /*for (i = 0; i < Object.keys(response.data).length; i++) {
-            if (i === 0) {
-                $("#"+Object.keys(response.data)[0]).focus();
-            }
-            $("#" + Object.keys(response.data)[i] + "_error").empty().append(response.data[Object.keys(response.data)[i]][0]);
-        }*/
     }
+}
+
+function sweetAlertApproved(text = "Are you sure you want to approve selected records?") {
+    return Swal.fire({
+        title               : "Are you sure?",
+        text                : text,
+        icon                : "warning",
+        showCancelButton    : true,
+        buttonsStyling      : false,
+        confirmButtonText   : "Yes, approve!",
+        cancelButtonText    : "No, cancel",
+        customClass         : {
+            confirmButton       : "btn fw-bold btn-success",
+            cancelButton        : "btn fw-bold btn-active-light-danger"
+        }
+    })
+}
+
+function sweetAlertUnapproved(text = "you want to un-approved selected records?") {
+    return Swal.fire({
+        title               : "Are you sure?",
+        text                : text,
+        icon                : "warning",
+        showCancelButton    : true,
+        buttonsStyling      : false,
+        confirmButtonText   : "Yes, declined!",
+        cancelButtonText    : "No, cancel",
+        customClass         : {
+            confirmButton       : "btn fw-bold btn-danger",
+            cancelButton        : "btn fw-bold btn-active-light-danger"
+        }
+    })
 }

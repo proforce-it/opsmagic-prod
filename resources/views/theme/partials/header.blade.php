@@ -48,8 +48,8 @@
                 <!--begin::Breadcrumb-->
                 <ul class="breadcrumb breadcrumb-separatorless fw-bold fs-7 pt-1">
 
-                    @php($title0 = str_replace('-', ' ', strtoupper($str[0])))
-                    @php($title1 = str_replace('-', ' ', strtoupper($str[1])))
+                    @php($title0 = str_replace('WORKER', 'ASSOCIATE', str_replace('-', ' ', strtoupper($str[0]))))
+                    @php($title1 = str_replace('WORKER', 'ASSOCIATE', str_replace('-', ' ', strtoupper($str[1]))))
 
                     <li class="breadcrumb-item text-muted">
                         <a href="{{ url('dashboard')}}" class="text-muted text-hover-primary">DASHBOARD</a>
@@ -74,7 +74,6 @@
                             <span id="header_sub_title">{{ $title1 }}</span> <span id="header_additional_info" class="text-uppercase ms-1"></span>
                         </li>
                     @endif
-                    <!--end::Item-->
                 </ul>
                 <!--end::Breadcrumb-->
             </div>

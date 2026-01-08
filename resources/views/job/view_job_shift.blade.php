@@ -62,7 +62,7 @@
                                     <div class="btn-primary p-4 me-1 cursor-pointer" id="edit_booking_detail_btn">
                                         <i class="fs-xxl-1 las la-pencil-alt text-white" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" data-bs-original-title="Edit details for current shift"></i>
                                     </div>
-                                    <div class="btn-primary p-4 me-1">
+                                    <div class="btn-primary p-4 me-1" id="copy_job_shift_modal_btn">
                                         <i class="fs-xxl-1 las la-copy text-white" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" data-bs-original-title="Copy shift"></i>
                                     </div>
                                     <div class="btn-primary p-4 me-1 cursor-pointer rounded-bottom-end" style="border-bottom-right-radius: 10px;" onclick="window.location.href='{{ url('export-booking-calendar-sheet-confirm-worker/'.$shift['id']) }}'">
@@ -82,7 +82,7 @@
                             @else
                                 @include('job.current_and_future_job_shift')
                             @endif
-
+                            @include('job.copy_job_shift_modal')
                         </div>
                     </div>
                 </div>
@@ -98,4 +98,5 @@
     </script>
     @yield('past_job_shift_js')
     @yield('current_and_future_job_shift_js')
+    @yield('copy_job_shift_js')
 @endsection

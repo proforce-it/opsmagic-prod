@@ -97,19 +97,21 @@ class JobShiftUploadController extends Controller
             throw new \Exception('Duration must be a valid number, not a string or character');
         }
 
-        if (strpos($duration, '.') === false) {
-            $duration .= '.0';
+        $duration = number_format((float)$duration, 2, '.', '');
+        $durationArray = explode('.', $duration);
+
+        if (!in_array($durationArray[1], ['00','25','50','75'])) {
+            throw new \Exception('Shift duration must be in 0.25 hour increments');
         }
 
-        $durationArray = explode('.', $duration);
         $duration_hr = intval($durationArray[0]);
         $duration_min = isset($durationArray[1])
-            ? intval(str_pad($durationArray[1], 2, '0', STR_PAD_RIGHT))
+            ? intval(round($durationArray[1] * 60 / 100))
             : 0;
         $currentShiftLength = ($duration_hr * 60) + $duration_min;
 
         $initialTime = Carbon::parse($start_time);
-        $end_time = $initialTime->copy()->addHours($duration_hr)->addMinutes($duration_min);
+        $end_time = $initialTime->copy()->addHours((int) $duration_hr)->addMinutes((int) $duration_min);
 
         // Check job existence and status
         $shiftDateCarbon = Carbon::parse($date);
@@ -264,8 +266,8 @@ class JobShiftUploadController extends Controller
             ->get();
 
         foreach ($overlappingShifts as $shift) {
-            $shiftEndTime = Carbon::parse($shift->start_time)->addMinutes($shift->shift_length);
-            $newShiftEndTime = Carbon::parse($start_time)->addMinutes($currentShiftLength);
+            $shiftEndTime = Carbon::parse($shift->start_time)->addMinutes((int) $shift->shift_length);
+            $newShiftEndTime = Carbon::parse($start_time)->addMinutes((int) $currentShiftLength);
 
             if ($newShiftEndTime > Carbon::parse($shift->start_time) && Carbon::parse($start_time) < $shiftEndTime) {
                 throw new \Exception('Inconsistent shift start or duration.');

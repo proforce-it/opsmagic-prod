@@ -24,4 +24,8 @@ class JobShift extends Model
     public function JobShiftWorker_details() {
         return $this->hasMany(JobShiftWorker::class, 'job_shift_id');
     }
+
+    public function Job_line_client_requirement_details(){
+        return $this->hasMany(JobLineClientRequirement::class,'job_shift_id','id');
+    }
 }

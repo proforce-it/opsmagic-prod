@@ -14,21 +14,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
+use Laravel\Passport\HasApiTokens;
 
-class Worker extends Authenticatable implements JWTSubject
+class Worker extends Authenticatable
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasApiTokens, HasFactory, SoftDeletes;
     protected $guarded = [];
-
-    public function getJWTIdentifier() {
-        return $this->getKey();
-    }
-
-    public function getJWTCustomClaims() {
-        return [];
-    }
 
     public function note_details() {
         return $this->hasMany(Note::class, 'worker_id', 'id')->with('user_details')->where('type', 'Worker')->orderBy('id', 'desc');

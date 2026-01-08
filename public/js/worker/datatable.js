@@ -23,12 +23,6 @@ let expenseList = function () {
                     d.status    = $('input[name="worker_status"]:checked').val();
                     d.filter    = $('#filter').val();
                     d.cost_center = $('#cost_center').val();
-                    /*d.first_name    = $("#first_name").val();
-                    d.surname       = $("#surname").val();
-                    d.mobile_number = $("#mobile_number").val();
-                    d.email         = $("#email").val();
-                    d.worker_no     = $("#worker_no").val();
-                    d.status        = $("#status").val();*/
                 },
             },
             "columns": [

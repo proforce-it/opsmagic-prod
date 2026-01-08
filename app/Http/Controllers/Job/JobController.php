@@ -101,19 +101,17 @@ class JobController extends Controller
     public function createJobShift(Request $request) {
         DB::beginTransaction();
         try {
-            /*$validator = Validator::make($request->input(), [
-                'from_date'         => 'required',
-                'how_many_days'     => 'required|numeric|min:1',
-                'number_of_worker'  => 'required|numeric|min:1',
-            ]);*/
-
             $rules = [
                 'from_date'         => 'required',
                 'how_many_days'     => 'required|numeric|min:1',
                 'number_of_no_line'  => 'required|integer|min:1',
             ];
 
-            $messages = [];
+            $messages = [
+                'number_of_no_line.required' => 'The total number of associates field is required.',
+                'number_of_no_line.integer' => 'The total number of associates must be a valid number.',
+                'number_of_no_line.min' => "The total number of associates must be at least 1."
+            ];
             $number_workers = 0;
             if ($request->has('line_requirement_number')) {
                 $rules["line_requirement_number"] = 'required|array';
@@ -125,6 +123,9 @@ class JobController extends Controller
                     $messages["line_requirement_number.$id.min"] = "Line requirement must be at least 0.";
                 }
                 $number_workers = array_sum($request->input('line_requirement_number'));
+                $rules['number_of_no_line'] = ($number_workers <= 0)
+                    ? 'required|integer|min:1'
+                    : 'nullable|integer|min:0';
             }
 
             $validator = Validator::make($request->input(), $rules, $messages);
@@ -142,13 +143,13 @@ class JobController extends Controller
                 return self::responseWithError('Job not found, please try again.');
 
             $start_date = Carbon::parse($params['from_date']);
-            $end_date = $start_date->copy()->addDays($params['how_many_days']-1);
+            $end_date = $start_date->copy()->addDays((int) $params['how_many_days']-1);
 
             $current_date = $start_date->copy();
             while ($current_date->lte($end_date)) {
 
                 $initialTime = Carbon::parse($job['default_shift_start_time']);
-                $end_time    = $initialTime->copy()->addHours($job['default_shift_length_hr'])->addMinutes($job['default_shift_length_min']);
+                $end_time    = $initialTime->copy()->addHours((int) $job['default_shift_length_hr'])->addMinutes((int) $job['default_shift_length_min']);
 
                 $created = JobShift::query()->create([
                     'job_id' => $jobID,
@@ -202,7 +203,11 @@ class JobController extends Controller
                             $eventCollection->push([
                                 'start' => $date->toDateString(),
                                 'extendedProps' => [
-                                    'assigned'  => JobShiftWorker::query()->where('job_shift_id', $row['id'])->whereNotNull('confirmed_at')->count(),
+                                    'assigned'  => JobShiftWorker::query()->where('job_shift_id', $row['id'])
+                                        ->whereNotNull('confirmed_at')
+                                        ->whereNull('declined_at')
+                                        ->whereNull('cancelled_at')
+                                        ->count(),
                                     'required'  => $row['number_workers'],
                                     'shift_id'  => $row['id'],
                                     'cancelled' => ($row['cancelled_at']) ? '<span class="text-danger fw-bolder">cancelled</span>' : '',
@@ -231,11 +236,13 @@ class JobController extends Controller
         $shiftDate = $shift['date'];
 
         $previousShift = JobShift::query()
+            ->where('job_id', $shift['job_id'])
             ->where('id', '<', $shift_id)
             ->orderBy('id', 'desc')
             ->first();
 
         $nextShift = JobShift::query()
+            ->where('job_id', $shift['job_id'])
             ->where('id', '>', $shift_id)
             ->orderBy('id', 'asc')
             ->first();
@@ -280,6 +287,14 @@ class JobController extends Controller
             })
             ->get()->toArray();
 
+        $archivedAndDeclinedWorkerIDs = ClientJobWorker::query()
+            ->where('job_id', $shift['job_id'])
+            ->where(function ($q) {
+                $q->whereNotNull('archived_at')
+                    ->orWhereNotNull('declined_at');
+            })
+            ->pluck('worker_id');
+
         $confirm_worker = JobShiftWorker::query()->select('job_shift_workers.*')
             ->addSelect(DB::raw("(SELECT COUNT(*) FROM job_shift_workers AS jsw
                 WHERE jsw.worker_id = job_shift_workers.worker_id
@@ -289,8 +304,30 @@ class JobController extends Controller
             ->whereNotNull('confirmed_at')
             ->whereNull('declined_at')
             ->whereNull('cancelled_at')
+            ->when($archivedAndDeclinedWorkerIDs->isNotEmpty(), function ($q) use ($archivedAndDeclinedWorkerIDs) {
+                $q->whereNotIn('worker_id', $archivedAndDeclinedWorkerIDs);
+            })
             ->with(['worker', 'rightsToWork', 'job_line_details'])
             ->get()->toArray();
+
+        $pastDateConfirm_worker = JobShiftWorker::query()->select('job_shift_workers.*')
+            ->addSelect(DB::raw("(SELECT COUNT(*) FROM job_shift_workers AS jsw
+                WHERE jsw.worker_id = job_shift_workers.worker_id
+                AND jsw.confirmed_at IS NOT NULL
+                AND jsw.shift_date BETWEEN DATE_SUB('$shiftDate', INTERVAL 14 DAY) AND '$shiftDate') AS confirmed_shifts_count"))
+            ->where('job_shift_id', $shift['id'])
+            ->whereNotNull('confirmed_at')
+            ->whereNull('declined_at')
+            ->whereNull('cancelled_at')
+            ->with(['worker', 'rightsToWork', 'job_line_details'])
+            ->get()
+            ->map(function($jsw){
+                $jsw->client_job_worker = ClientJobWorker::query()->where('job_id', $jsw->jobShift->job_id)
+                    ->where('worker_id', $jsw->worker_id)
+                    ->first();
+                unset($jsw->jobShift);
+                return $jsw;
+            })->toArray();
 
         $pending_worker = JobShiftWorker::query()->select('job_shift_workers.*')
             ->addSelect(DB::raw("(SELECT COUNT(*) FROM job_shift_workers AS jsw
@@ -301,18 +338,29 @@ class JobController extends Controller
             ->whereNull('confirmed_at')
             ->whereNull('declined_at')
             ->whereNull('cancelled_at')
+            ->when($archivedAndDeclinedWorkerIDs->isNotEmpty(), function ($q) use ($archivedAndDeclinedWorkerIDs) {
+                $q->whereNotIn('worker_id', $archivedAndDeclinedWorkerIDs);
+            })
             ->with(['worker', 'rightsToWork', 'job_line_details'])
             ->get()->toArray();
 
         $declined_worker = JobShiftWorker::query()->where('job_shift_id', $shift['id'])
             ->whereNotNull('declined_at')
+            ->when($archivedAndDeclinedWorkerIDs->isNotEmpty(), function ($q) use ($archivedAndDeclinedWorkerIDs) {
+                $q->whereNotIn('worker_id', $archivedAndDeclinedWorkerIDs);
+            })
             ->with(['worker', 'rightsToWork', 'job_line_details'])
-            ->get()->toArray();
+            ->get()
+            ->toArray();
 
         $cancelled_worker = JobShiftWorker::query()->where('job_shift_id', $shift['id'])
             ->whereNotNull('cancelled_at')
+            ->when($archivedAndDeclinedWorkerIDs->isNotEmpty(), function ($q) use ($archivedAndDeclinedWorkerIDs) {
+                $q->whereNotIn('worker_id', $archivedAndDeclinedWorkerIDs);
+            })
             ->with(['worker', 'rightsToWork', 'job_line_details'])
-            ->get()->toArray();
+            ->get()
+            ->toArray();
 
 
         $ineligibleWorker = ClientJobWorker::query()->where('job_id', $shift['job_id'])
@@ -475,13 +523,14 @@ class JobController extends Controller
 
         // CURRENT DURATION
         $hours = $shift['shift_length_hr'];
-        $minutes = $shift['shift_length_min'];
-        $minutesRounded = round($minutes / 15) * 15;
-        if ($minutesRounded == 60) {
+        $minutes = round($shift['shift_length_min'] / 15) * 15;
+        if ($minutes == 60) {
             $hours += 1;
-            $minutesRounded = 0;
+            $minutes = 0;
         }
-        $currentDuration = $hours . ($minutesRounded > 0 ? '.' . str_pad($minutesRounded, 2, '0', STR_PAD_LEFT) : '00');
+        $decimalMinutes = ($minutes / 60) * 1;
+        $currentDuration = number_format($hours + $decimalMinutes, 2, '.', '');
+
         $assignedGroupIds = GroupWithJob::query()->where('job_id', $shift['job_id'])
             ->pluck('group_id')
             ->toArray();
@@ -507,7 +556,8 @@ class JobController extends Controller
             'costCentre',
             'assignedGroups',
             'currentDuration',
-            'group'
+            'group',
+            'pastDateConfirm_worker'
         ));
     }
 
@@ -528,7 +578,7 @@ class JobController extends Controller
             $params = $request->input();
 
             $initialTime = Carbon::parse($params['shift_start_time']);
-            $end_time    = $initialTime->copy()->addHours($params['shift_duration_hr'])->addMinutes($params['shift_duration_min']);
+            $end_time    = $initialTime->copy()->addHours((int) $params['shift_duration_hr'])->addMinutes((int) $params['shift_duration_min']);
 
             JobShift::query()->where('id', $params['shift_id'])->update([
                 'start_time'        => $params['shift_start_time'],
@@ -564,10 +614,9 @@ class JobController extends Controller
             $durationArray = explode('.', $params['shift_worker_duration']);
             $hours = intval($durationArray[0]);
             $minutes = isset($durationArray[1])
-                ? intval(str_pad($durationArray[1], 2, '0', STR_PAD_RIGHT))
+                ? intval(round($durationArray[1] * 60 / 100))
                 : 0;
-            $end_time = $initialTime->copy()->addHours($hours)->addMinutes($minutes);
-            //$end_time = $initialTime->copy()->addHours($jobShift['shift_length_hr'])->addMinutes($jobShift['shift_length_min']);
+            $end_time = $initialTime->copy()->addHours((int) $hours)->addMinutes((int) $minutes);
 
             $shiftDate  = $jobShift['date'];
             $startTime  = $initialTime->format('H:i:s');
@@ -980,7 +1029,7 @@ class JobController extends Controller
         $startDate = Carbon::parse($pwData[$payroll_start_date_column]);
         $jobIds = [];
         for ($i = 0; $i < 7; $i++) {
-            $shiftDate = $startDate->copy()->addDays($i)->format('Y-m-d');
+            $shiftDate = $startDate->copy()->addDays((int) $i)->format('Y-m-d');
 
             $jobShift = JobShift::query()->where('job_id', $job_id)
                 ->where('date', $shiftDate)
@@ -1056,6 +1105,187 @@ class JobController extends Controller
 
             return self::responseWithSuccess('Worker successfully added into job.');
         } catch (\Exception $e) {
+            return self::responseWithError($e->getMessage());
+        }
+    }
+
+    public function copyJobShift(Request $request) {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make($request->input(), [
+                'shift_start_date'  => 'required',
+            ]);
+
+            if ($validator->errors()->messages()) {
+                return self::validationError($validator->errors()->messages());
+            }
+
+            $params = $request->input();
+            $jobShift = JobShift::query()->where('id',$params['copy_job_shift_id'])
+                ->with(['Job_line_client_requirement_details','JobShiftWorker_details' => function ($query) {
+                    $query->whereNotNull('confirmed_at');
+                    $query->whereNull('cancelled_at');
+                    $query->whereNull('declined_at');
+                }])
+                ->first();
+            if (!$jobShift) {
+                throw new \Exception('Job shift data not found, please try again later.');
+            }
+
+            $startDate = Carbon::parse($params['shift_start_date']);
+            if (empty($params['shift_end_date'])) {
+                $checkDate = $startDate->format('Y-m-d');
+                if (JobShift::query()->where('job_id', $jobShift['job_id'])
+                    ->where('date', $checkDate)
+                    ->exists()) {
+                    throw new \Exception('Job shift already exist in '.Carbon::parse($checkDate)->format('d/m/Y').'.');
+                }
+                $this->copyShift($jobShift, $checkDate);
+            } else {
+                $endDate = Carbon::parse($params['shift_end_date']);
+                while ($startDate->lte($endDate)) {
+                    $this->copyShift($jobShift, $startDate->format('Y-m-d'));
+                    $startDate->addDay();
+                }
+            }
+
+            DB::commit();
+            return self::responseWithSuccess('Copy shift process has been completed.');
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+            return self::responseWithError($e->getMessage());
+        }
+    }
+
+    private function copyShift($jobShift, $shiftDate) {
+        $checkJobShift = JobShift::query()->where('job_id', $jobShift['job_id'])
+            ->where('date', $shiftDate)
+            ->first();
+        if (!$checkJobShift) {
+            $createdShift = JobShift::query()->create([
+                'job_id' => $jobShift['job_id'],
+                'date' => $shiftDate,
+                'start_time' => $jobShift['start_time'],
+                'end_time' => $jobShift['end_time'],
+                'shift_length_hr' => $jobShift['shift_length_hr'],
+                'shift_length_min' => $jobShift['shift_length_min'],
+                'shift_length' => $jobShift['shift_length'],
+                'number_workers' => $jobShift['number_workers'],
+            ]);
+
+            if($jobShift['Job_line_client_requirement_details']) {
+                foreach ($jobShift['Job_line_client_requirement_details'] as $job_line_client_requirements) {
+                    JobLineClientRequirement::query()->create([
+                        'job_shift_id' => $createdShift->id,
+                        'job_line_id' => $job_line_client_requirements['job_line_id'],
+                        'worker_requirement' => $job_line_client_requirements['worker_requirement']
+                    ]);
+                }
+            }
+
+            foreach ($jobShift->JobShiftWorker_details as $workerDetail) {
+                $existingWorkerShift = JobShiftWorker::query()->where('worker_id', $workerDetail->worker_id)
+                    ->where('shift_date', $shiftDate)
+                    ->exists();
+
+                if (!$existingWorkerShift) {
+                    JobShiftWorker::query()->create([
+                        'job_shift_id' => $createdShift->id,
+                        'worker_id' => $workerDetail->worker_id,
+                        'shift_date' => $shiftDate,
+                        'confirmed_at' => Carbon::now(),
+                        'invited_at' => Carbon::now(),
+                        'assign_type' => 'Direct placement',
+                        'job_line_id' => $workerDetail->job_line_id,
+                        'start_time' => $workerDetail->start_time,
+                        'end_time' => $workerDetail->end_time,
+                        'shift_length_hr' => $workerDetail->shift_length_hr,
+                        'shift_length_min' => $workerDetail->shift_length_min,
+                        'shift_length' => $workerDetail->shift_length,
+                        'duration' => $workerDetail->duration
+                    ]);
+                }
+            }
+        }
+    }
+
+    public function copyJobShiftInWorkerAvailability(Request $request) {
+        DB::beginTransaction();
+        try {
+            $validator = Validator::make($request->input(), [
+                'date' => 'required',
+            ]);
+
+            if ($validator->errors()->messages()) {
+                return self::validationError($validator->errors()->messages());
+            }
+
+            $params = $request->input();
+            $payroll_start_date_column = $params['payroll_week_starts'].'_payroll_start';
+            $payroll_end_date_column = $params['payroll_week_starts'].'_payroll_end';
+
+            $pwData = PayrollWeekDate::query()->select(['id', 'payroll_week_number', $payroll_start_date_column, $payroll_end_date_column, 'pay_date'])
+                ->where('payroll_week_number', $params['week_number'])
+                ->where('year', $params['week_year'])
+                ->first();
+
+            if (!$pwData) {
+                throw new \Exception('Payroll week data not found.');
+            }
+
+            $futurePwData = PayrollWeekDate::query()->select(['id', 'payroll_week_number', $payroll_start_date_column, $payroll_end_date_column, 'pay_date'])
+                ->where($payroll_start_date_column, Carbon::parse($params['date'])->format('Y-m-d'))
+                ->first();
+
+            if (!$futurePwData) {
+                throw new \Exception('Selected payroll week data not found.');
+            }
+
+            $futureShiftWeekDate = [];
+            $futureShiftWeekStartDate = Carbon::parse($futurePwData[$payroll_start_date_column]);
+            $futureShiftWeekEndDate = Carbon::parse($futurePwData[$payroll_end_date_column]);
+            while ($futureShiftWeekStartDate->lte($futureShiftWeekEndDate)) {
+                $futureDate = $futureShiftWeekStartDate->format('Y-m-d');
+                if (JobShift::query()
+                    ->where('job_id', $params['job_id'])
+                    ->where('date',$futureDate)
+                    ->exists()) {
+                    throw new \Exception('Cannot copy shifts - destination week already has at least one shift in it. You can only copy shifts into empty weeks.');
+                }
+
+                $futureShiftWeekDate[] = $futureDate;
+                $futureShiftWeekStartDate->addDay();
+            }
+
+            $copyShiftWeekStartDate = Carbon::parse($pwData[$payroll_start_date_column]);
+            $copyShiftWeekEndDate = Carbon::parse($pwData[$payroll_end_date_column]);
+            $index = 0;
+            while ($copyShiftWeekStartDate->lte($copyShiftWeekEndDate)) {
+
+                $jobShift = JobShift::query()
+                    ->where('job_id', $params['job_id'])
+                    ->where('date',$copyShiftWeekStartDate->format('Y-m-d'))
+                    ->with(['Job_line_client_requirement_details','JobShiftWorker_details' => function ($query) {
+                        $query->whereNotNull('confirmed_at');
+                        $query->whereNull('cancelled_at');
+                        $query->whereNull('declined_at');
+                    }])
+                    ->first();
+
+                if ($jobShift) {
+                    $this->copyShift($jobShift, $futureShiftWeekDate[$index]);
+                }
+
+                $copyShiftWeekStartDate->addDay();
+                $index++;
+            }
+
+            DB::commit();
+            return self::responseWithSuccess('Copy shift process has been completed.');
+        } catch (\Exception $e) {
+
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
     }

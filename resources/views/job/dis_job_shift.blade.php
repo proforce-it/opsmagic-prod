@@ -216,26 +216,38 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="mb-7 fv-row fv-plugins-icon-container">
-                                        <label class="fs-4 fw-bold">Number of workers required (by line)</label>
+                            @if($jobLineTextBox)
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-7 fv-row fv-plugins-icon-container">
+                                            <label class="fs-4 fw-bold">Number of associates required (by line)</label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-lg-12">
-                                    <div class="mb-10 fv-row fv-plugins-icon-container">
-                                        <label for="number_of_no_line" class="fs-6 fw-bold required">No line</label>
-                                        <input class="form-control" name="number_of_no_line" id="number_of_no_line" type="text" value="0">
-                                        <span class="text-danger error" id="number_of_no_line_error"></span>
-                                        <label class="fs-6 fw-bold text-gray-400">You can assign lines to these workers later</label>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-10 fv-row fv-plugins-icon-container">
+                                            <label for="number_of_no_line" class="fs-6 fw-bold">No line</label>
+                                            <input class="form-control" name="number_of_no_line" id="number_of_no_line" type="text" value="0">
+                                            <span class="text-danger error" id="number_of_no_line_error"></span>
+                                            <label class="fs-6 fw-bold text-gray-400">You can assign lines to these associates later</label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row" id="job_line_text_box_section">
-                                {{ $jobLineTextBox }}
-                            </div>
+                                <div class="row" id="job_line_text_box_section">
+                                    {{ $jobLineTextBox }}
+                                </div>
+                            @else
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="mb-10 fv-row fv-plugins-icon-container">
+                                            <label for="number_of_no_line" class="fs-6 fw-bold required">Number of associates required</label>
+                                            <input class="form-control" name="number_of_no_line" id="number_of_no_line" type="text" value="0">
+                                            <span class="text-danger error" id="number_of_no_line_error"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
 

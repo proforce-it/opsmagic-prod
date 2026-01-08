@@ -525,7 +525,9 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header py-7 d-flex justify-content-between">
-                    <h2>Add <span class="selected_worker_count"></span> workers to existing group</h2>
+                    <h2 id="add_group_with_worker_modal_title">
+                        Add <span class="selected_worker_count"></span> workers to existing group
+                    </h2>
                     <div class="btn btn-sm btn-icon btn-active-color-primary" id="existing_group_modal_close_btn">
                         <i class="fs-2 las la-times"></i>
                     </div>
@@ -533,7 +535,7 @@
                 <div class="modal-body">
                     <div class="w-100">
                         <div class="fv-row">
-                            <div class="row">
+                            <div class="row" id="add_group_with_worker_form_section">
                                 <div class="col-lg-12">
                                     <div class="mb-5 fv-row fv-plugins-icon-container">
                                         <label for="existing_group_name" class="fs-6 fw-bold">Select group</label>
@@ -549,12 +551,34 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row d-none" id="add_group_with_worker_confirm_job_section">
+                                <div class="col-lg-12">
+                                    <p class="mb-5 fs-4">The group <span id="selected_group_name"></span> is already linked to the following job(s)</p>
+                                    <p class="fs-4" id="selected_group_linked_job_name_section"></p>
+                                    <p class="mt-5 fs-4">Do you want to link the new group members to these jobs or only to jobs you link with the group in the future?</p>
+                                </div>
+                                <div class="col-lg-12 mt-5">
+                                    <div class="fv-row fv-plugins-icon-container">
+                                        <div>
+                                            <label class="form-check-inline me-5">
+                                                <input type="radio" name="link_worker_to_job_using_group_type" id="link_to_existing_job" value="link_to_existing_job" checked>
+                                                <span class="fw-bold fs-5">Link to existing job(s)</span>
+                                            </label>
+                                            <label class="form-check-inline">
+                                                <input type="radio" name="link_worker_to_job_using_group_type" id="only_link_to_new_job" value="only_link_to_new_job">
+                                                <span class="fw-bold fs-5">Only link to new job(s)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <div class="row">
                         <div class="col-lg-12">
+                            <input type="hidden" name="create_type" id="create_type" value="0" /> <!-- 0 = NOT CREATE, 1 = CREATE -->
                             <button type="button" name="existing_group_submit_btn" id="existing_group_submit_btn" class="btn btn-primary float-end">Add <span class="selected_worker_count"></span> workers to group</button>
                             <button type="button" class="btn btn-lg btn-primary me-3 float-end disabled d-none" data-kt-stepper-action="submit" name="existing_group_process_btn" id="existing_group_process_btn">
                                 <span>Please wait...
@@ -848,6 +872,7 @@
                     $(".selected_worker_count").empty().append(checkedValues.length);
                     $("#add_to_job_modal").modal('show');
                 } else if (drpValue === 'add_to_existing_group') {
+                    add_group_modal_reset();
                     $(".selected_worker_count").empty().append(checkedValues.length);
                     $("#existing_group_modal").modal('show');
                 } else if (drpValue === 'create_a_new_group') {
@@ -1077,8 +1102,19 @@
         /*--- END WORKER LEAVING ---*/
 
         /*--- BEGIN WORKER ADD IN EXISTING GROUP ---*/
+        function add_group_modal_reset() {
+            $("#add_group_with_worker_modal_title").html('Add <span class="selected_worker_count"></span> workers to existing group');
+            $("#add_group_with_worker_form_section").removeClass('d-none');
+            $("#add_group_with_worker_confirm_job_section").addClass('d-none');
+            $("#selected_group_name").html('');
+            $("#selected_group_linked_job_name_section").html('');
+            $("#existing_group_submit_btn").html('Add <span class="selected_worker_count"></span> workers to group');
+            $("#create_type").val('0');
+        }
+
         $("#existing_group_modal_close_btn").on('click', function () {
             $(".error").html('');
+            add_group_modal_reset();
             $("#existing_group_name").val('').trigger('change');
             $("#existing_group_modal").modal('hide');
         });
@@ -1100,17 +1136,40 @@
                     _token      : '{{ csrf_token() }}',
                     worker_id   : addExistingGroupWorkerId,
                     existing_group_name  : $("#existing_group_name").val(),
+                    create_type : $("#create_type").val(),
+                    link_worker_to_job_using_group_type : $('input[name="link_worker_to_job_using_group_type"]:checked').val(),
                 },
                 success     : function (response) {
-                    decodeResponse(response)
-
                     $("#existing_group_submit_btn").removeClass('d-none');
                     $("#existing_group_process_btn").addClass('d-none');
 
                     if(response.code === 200) {
-                        $("#existing_group_modal_close_btn").click();
-                        $("#with_selected").val('').trigger('change');
-                        createDataTable();
+                        if (response.message === 'selected_group_details_fetched') {
+                            $("#add_group_with_worker_modal_title").text('Link new members to existing jobs?');
+                            $("#add_group_with_worker_form_section").addClass('d-none');
+                            $("#add_group_with_worker_confirm_job_section").removeClass('d-none');
+                            $("#selected_group_name").html(response.data.group_name);
+                            $("#selected_group_linked_job_name_section").html(response.data.job_name);
+                            $("#existing_group_submit_btn").text('Continue')
+                            $("#create_type").val('1');
+                        } else {
+                            toastr.success(response.message);
+
+                            $("#existing_group_modal_close_btn").click();
+                            $("#with_selected").val('').trigger('change');
+                            createDataTable();
+                        }
+                    } else if(response.code === 500) {
+                        toastr.error(response.message);
+                    } else {
+                        const keys = Object.keys(response.data);
+                        keys.forEach((key, index) => {
+                            const inputId = key.replace(/\./g, '_');
+                            if (index === 0) {
+                                $("#" + inputId).focus();
+                            }
+                            $("#" + inputId + "_error").empty().append(response.data[key][0]);
+                        });
                     }
                 },
                 error   : function (response) {

@@ -173,6 +173,38 @@ class DashboardController extends Controller
                 return false;
             });
 
+        $workersWorkedGreaterThan12Days2 = Timesheet::query()
+            ->when($cost_center != '', function ($query) use ($cost_center) {
+                $query->whereHas('worker_details.worker_cost_center', function ($subQuery) use ($cost_center) {
+                    $subQuery->where('cost_center', $cost_center);
+                });
+            })
+            ->whereBetween('date', [
+                Carbon::now()->subDays(12)->format('Y-m-d'),
+                Carbon::now()->subDay()->format('Y-m-d')
+            ])
+            ->with('worker_details')
+            ->get()
+            ->groupBy('worker_id')
+            ->filter(function ($timesheets) {
+                $sortedDates = $timesheets->sortBy('date')->pluck('date')->map(function ($date) {
+                    return Carbon::parse($date);
+                });
+
+                $consecutiveDays = 1;
+                foreach ($sortedDates as $index => $date) {
+                    if (isset($sortedDates[$index + 1]) && $date->diffInDays($sortedDates[$index + 1]) === 1) {
+                        $consecutiveDays++;
+                        if ($consecutiveDays >= 12) {
+                            return true;
+                        }
+                    } else {
+                        $consecutiveDays = 1;
+                    }
+                }
+                return false;
+            });
+
         return [
             'shift_with_space_tomorrow' => $shiftWithSpaceTomorrow,
             'shift_with_space' => $shiftWithSpace,
@@ -180,6 +212,7 @@ class DashboardController extends Controller
             'expiring_rtws' => $expiringRtws,
             'shift_workers_without_payroll' => $shiftWorkersWithoutPayroll,
             'workers_worked_greater_than_12_days' => $workersWorkedGreaterThan12Days->count(),
+            'workers_worked_greater_than_12_days_2' => $workersWorkedGreaterThan12Days2->count(),
         ];
     }
 
@@ -216,7 +249,7 @@ class DashboardController extends Controller
 
         $totalTimesheetDayWuse = [];
         foreach (range(0, 6) as $offset) {
-            $date = $start_date->copy()->addDays($offset)->toDateString();
+            $date = $start_date->copy()->addDays((int) $offset)->toDateString();
             $totalTimesheetDayWuse[] = $dayWiseTimesheetEntry[$date] ?? 0;
         }
 

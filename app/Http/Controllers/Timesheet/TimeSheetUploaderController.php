@@ -117,7 +117,7 @@ class TimeSheetUploaderController extends Controller
         $hrs_worked     = $row[4];
         $inTime         = $row[3];
         $outTime        = $row[5];
-        $line_code      = ($row[6]) ? $row[6] : null;
+        $line_code      = (isset($row[6])) ? $row[6] : null;
 
         if (!$row[0]) {
             throw new \Exception('Date not define - ignored');

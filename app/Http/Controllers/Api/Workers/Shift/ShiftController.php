@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Workers\Shift;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client\ClientJobWorker;
+use App\Models\Job\JobShift;
 use App\Models\Job\JobShiftWorker;
 use App\Models\PickUpPoint\PickUpPoint;
 use App\My_response\Traits\Response\JsonResponse;
@@ -18,9 +19,10 @@ class ShiftController extends Controller
     public function index() {
         try {
             $workerId = auth('api')->id();
-            
+
             $shifts = JobShiftWorker::query()
                 ->where('worker_id', $workerId)
+                ->whereDate('shift_date', '>=', Carbon::now()->format('Y-m-d'))
                 ->with('jobShift.client_job_details.client_details')
                 ->with('jobShift.client_job_details.site_details')
                 ->get();
@@ -107,7 +109,8 @@ class ShiftController extends Controller
                 'client_name' => $jobShift->client_job_details->client_details->company_name,
                 'site_name'   => $jobShift->client_job_details->site_details->site_name,
                 'job_name'    => $jobShift->client_job_details->name,
-                'pickup_point' => $pickupDetails
+                'pickup_point' => $pickupDetails,
+                'client_image' => isset($jobShift->client_job_details->client_details->company_logo) ? asset('workers/client_document/'.$jobShift->client_job_details->client_details->company_logo) : null
             ];
         }
 
@@ -116,5 +119,68 @@ class ShiftController extends Controller
             'total_hours' => number_format($totalHours, 2),
             'count'       => count($items),
         ];
+    }
+
+    public function invitationShiftAction(Request $request) {
+        try {
+            $validator = Validator::make($request->all(), [
+                'id' => 'required',
+                'status' => 'required', // 0 = declined, 1 = confirmed
+            ]);
+
+            if ($validator->fails()) {
+                return self::apiValidationError($validator->errors()->messages());
+            }
+
+            $workerId = auth('api')->id();
+            $params = $request->input();
+
+            $jobShiftWorker = JobShiftWorker::query()->where('id', $params['id'])->first();
+            if (!$jobShiftWorker) {
+                return self::responseWithError('Job shift worker details not found, please try again later.');
+            }
+
+            if ($jobShiftWorker['worker_id'] != $workerId) {
+                return self::responseWithError('Invalid invitation id passed, please pass valid invitation id.');
+            }
+
+            $jobShift = JobShift::query()->where('id', $jobShiftWorker['job_shift_id'])->first();
+            if (!$jobShift)
+                return self::responseWithError('Job shift details not found, please try again later');
+
+            if ($jobShift['cancelled_at']) {
+                return self::responseWithError('This shift is cancelled, Thank you.');
+            }
+
+            $JobShiftWorker = JobShiftWorker::query()->where('id', $params['id'])->first();
+            if ($JobShiftWorker['confirmed_at'] != null) {
+                return self::responseWithError('Invitation already accepted.');
+            }
+
+            if ($JobShiftWorker['declined_at'] != null) {
+                return self::responseWithError('Invitation already declined.');
+            }
+
+            if ($params['status'] == '1') {
+                JobShiftWorker::query()->where('id', $params['id'])->update([
+                    'confirmed_at' => \Carbon\Carbon::now(),
+                ]);
+                return self::responseWithSuccess('Thank you for accepted our invitation.');
+
+            } else if ($params['status'] == '0') {
+                JobShiftWorker::query()->where('id', $params['id'])->update([
+                    'declined_at' => Carbon::now(),
+                    'cancelled_by' => 'worker',
+                    'cancelled_by_user_id' => $jobShiftWorker['worker_id'],
+                ]);
+                return self::responseWithSuccess('Invitation successfully declined.');
+
+            } else {
+                return self::responseWithError('Invalid status code.');
+            }
+
+        } catch (\Exception $e) {
+            return self::responseWithError($e->getMessage());
+        }
     }
 }

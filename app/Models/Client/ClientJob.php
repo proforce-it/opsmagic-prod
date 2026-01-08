@@ -2,6 +2,7 @@
 
 namespace App\Models\Client;
 
+use App\Models\Group\Group;
 use App\Models\Job\ClientJobPayRate;
 use App\Models\Job\JobShift;
 use App\Models\Job\PayrollLineItem;
@@ -45,5 +46,9 @@ class ClientJob extends Model
 
     public function client_job_worker_details() {
         return $this->hasMany(ClientJobWorker::class, 'job_id', 'id');
+    }
+
+    public function groups() {
+        return $this->belongsToMany(Group::class, 'group_with_jobs', 'job_id', 'group_id');
     }
 }

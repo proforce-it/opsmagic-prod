@@ -225,6 +225,7 @@ class GroupController extends Controller
     }
 
     public function storeGroupWithWorkerAction(Request $request){
+        DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
                'group_name' => 'required',
@@ -236,12 +237,79 @@ class GroupController extends Controller
                 return self::validationError($validator->errors()->messages());
             }
 
+            $params = $request->input();
+            $group = Group::query()->where('id', $params['group_name'])
+                ->with(['jobs'])
+                ->first();
+
+            if (!$group) {
+                throw new \Exception('Group details not found, please try again later.');
+            }
+
+            if ($params['create_type'] == 0) {
+                $jobNames = $group->jobs
+                    ->map(fn ($job) => '- ' . $job->name)
+                    ->implode('<br>');
+
+                if ($jobNames != '') {
+                    return self::responseWithSuccess('selected_group_details_fetched', [
+                        'group_name' => $group['name'],
+                        'job_name' => $jobNames
+                    ]);
+                }
+
+                GroupWithWorker::query()->create([
+                    'group_id' => $params['group_name'],
+                    'worker_id' => $params['worker_id']
+                ]);
+
+                DB::commit();
+                return self::responseWithSuccess('Worker successfully added into group.');
+            }
+
+            if ($params['link_worker_to_job_using_group_type'] == 'link_to_existing_job') {
+                foreach ($group->jobs->pluck('id')->values() as $jobId) {
+
+                    $job = ClientJob::query()->where('id', $jobId)->first();
+                    if (!$job) {
+                        throw new \Exception('Job details not found, please try again later.');
+                    }
+
+                    $ClientJobWorker = ClientJobWorker::query()->where('job_id', $jobId)
+                        ->where('worker_id', $params['worker_id'])
+                        ->first();
+
+                    if ($ClientJobWorker) {
+                        if ($ClientJobWorker['declined_at'] || $ClientJobWorker['archived_at']) {
+                            ClientJobWorker::query()->where('id', $ClientJobWorker['id'])->update([
+                                'invitation_type'           => 2,
+                                'confirmed_at'              => Carbon::now(),
+                                'confirmed_by_admin_user_id'=> Auth::id(),
+                                'declined_at'               => null,
+                                'archived_at'               => null
+                            ]);
+                        }
+                    } else {
+                        ClientJobWorker::query()->create([
+                            'job_id'                    => $jobId,
+                            'worker_id'                 => $params['worker_id'],
+                            'invitation_type'           => 2,
+                            'confirmed_at'              => Carbon::now(),
+                            'confirmed_by_admin_user_id'=> Auth::id(),
+                        ]);
+                    }
+                }
+            }
+
             GroupWithWorker::query()->create([
-                'group_id' => $request->input('group_name'),
-                'worker_id' => $request->input('worker_id')
+                'group_id' => $params['group_name'],
+                'worker_id' => $params['worker_id']
             ]);
+
+            DB::commit();
             return self::responseWithSuccess('Worker successfully added into group.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
     }
@@ -417,6 +485,7 @@ class GroupController extends Controller
     }
 
     public function storeGroupWorkerAction(Request $request) {
+        DB::beginTransaction();
         try {
             $validator = Validator::make($request->all(), [
                 'group_worker_name' => 'required',
@@ -429,27 +498,98 @@ class GroupController extends Controller
             }
 
             $params = $request->input();
-            $insertArray = [];
-            if (!$params['group_worker_name']) {
-                return self::responseWithError('Please select a associate.');
+
+            $group = Group::query()->where('id', $params['group_id'])->with(['jobs'])->first();
+            if (!$group) {
+                throw new \Exception('Group details not found, please try again later.');
             }
 
-            foreach ($params['group_worker_name'] as $worker_id) {
-                $insertArray[] = [
-                    'group_id' => $params['group_id'],
-                    'worker_id' => $worker_id,
-                ];
+            if ($request->input('create_type') == 0) {
+                $jobNames = $group->jobs
+                    ->map(fn ($job) => '- ' . $job->name)
+                    ->implode('<br>');
+
+                if ($jobNames != '') {
+                    return self::responseWithSuccess('selected_group_details_fetched', [
+                        'group_name' => $group['name'],
+                        'job_name' => $jobNames
+                    ]);
+                }
+
+                $insertArray = $this->addWorkerIntoGroup($params['group_worker_name'], $params['group_id']);
+                if (!$insertArray) {
+                    throw new \Exception('Worker not available to added into group.');
+                }
+
+                GroupWithWorker::query()->insert($insertArray);
+                DB::commit();
+                return self::responseWithSuccess('Worker successfully added into group.');
             }
 
+            if ($request->input('link_worker_to_job_using_group_type') == 'link_to_existing_job') {
+                foreach ($group->jobs->pluck('id')->values() as $jobId) {
+
+                    $job = ClientJob::query()->where('id', $jobId)->first();
+                    if (!$job) {
+                        throw new \Exception('Job details not found, please try again later.');
+                    }
+
+                    foreach ($params['group_worker_name'] as $workerId) {
+                        $ClientJobWorker = ClientJobWorker::query()->where('job_id', $jobId)
+                            ->where('worker_id', $workerId)
+                            ->first();
+
+                        if ($ClientJobWorker) {
+                            if ($ClientJobWorker['declined_at'] || $ClientJobWorker['archived_at']) {
+                                ClientJobWorker::query()->where('id', $ClientJobWorker['id'])->update([
+                                    'invitation_type' => 2,
+                                    'confirmed_at' => Carbon::now(),
+                                    'confirmed_by_admin_user_id' => Auth::id(),
+                                    'declined_at' => null,
+                                    'archived_at' => null
+                                ]);
+                            }
+                        } else {
+                            ClientJobWorker::query()->create([
+                                'job_id' => $jobId,
+                                'worker_id' => $workerId,
+                                'invitation_type' => 2,
+                                'confirmed_at' => Carbon::now(),
+                                'confirmed_by_admin_user_id' => Auth::id(),
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            $insertArray = $this->addWorkerIntoGroup($params['group_worker_name'], $params['group_id']);
             if (!$insertArray) {
-                return self::responseWithError('Worker not available to added into group.');
+                throw new \Exception('Worker not available to added into group.');
             }
 
             GroupWithWorker::query()->insert($insertArray);
+            DB::commit();
             return self::responseWithSuccess('Worker successfully added into group.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
+    }
+
+    public function addWorkerIntoGroup($workerIds, $groupId) {
+        $insertArray = [];
+        if (!$workerIds) {
+            return self::responseWithError('Please select a associate.');
+        }
+
+        foreach ($workerIds as $worker_id) {
+            $insertArray[] = [
+                'group_id' => $groupId,
+                'worker_id' => $worker_id,
+            ];
+        }
+
+        return $insertArray;
     }
 
     public function linkGroupToJobAction(Request $request)
@@ -532,6 +672,7 @@ class GroupController extends Controller
             return self::responseWithError($e->getMessage());
         }
     }
+
     public function unlinkGroupToJobAction(Request $request) {
         DB::beginTransaction();
         try {
@@ -565,7 +706,4 @@ class GroupController extends Controller
             return self::responseWithError($e->getMessage());
         }
     }
-
-
-
 }

@@ -16,7 +16,7 @@
                         <p class="fs-2">
                             or you can <br>
                             <a href="{{ url('dashboard') }}" class="text-primary text-decoration-underline">return to your dashboard</a> or
-                            <a href="{{ url('create-worker') }}" class="text-primary text-decoration-underline">add another worker</a>
+                            <a href="{{ url('create-worker') }}" class="text-primary text-decoration-underline">add another associate</a>
                         </p>
                     </div>
                 </div>

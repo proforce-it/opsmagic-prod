@@ -1633,8 +1633,6 @@ class ClientController extends Controller
             $array  = [];
             if ($worker) {
                 foreach ($worker as $row) {
-
-
                     $latestRTWExpiryDate = RightToWorkHelper::getLatestDate($row['rights_to_work']);
                     $status = ($row['worker']) ? $row['worker']['status'] : '-';
                     $statusText = ($row['worker']) ? ($row['worker']['suspend'] == 'Yes') ? $status.' (<span class="text-danger">suspended</span>)' : $status : $status;
@@ -1642,7 +1640,6 @@ class ClientController extends Controller
                     $array[] = [
                         'name'          => $worker_name,
                         'worker_id'     => ($row['worker']) ? $row['worker']['worker_no'] : '',
-                        //'dob'           => ($row['worker']) ? date('d-m-Y', strtotime($row['worker']['date_of_birth'])) : '-',
                         'status'        => $statusText,
                         'invited_at'    => ($row['invitation_type'] == '1') ? date('d-m-Y H:i', strtotime($row['invited_at'])) : '-',
                         'declined_at'   => ($row['declined_at']) ? date('d-m-Y H:i', strtotime($row['declined_at'])) : '-',
@@ -1755,23 +1752,23 @@ class ClientController extends Controller
         $action = '';
         if ($confirmed_at || $declined_at) {
             if (!$archived_at) {
-                $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="archive_job_worker" data-job_worker_id="' . $id . '" data-worker_name="'.$worker_name.'">
+                $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="archive_job_worker" data-job_worker_id="' . $id . '" data-worker_id="'.$worker_id.'" data-worker_name="'.$worker_name.'">
                         <span class="svg-icon svg-icon-2">
                         <i class="fs-2 las la-unlink"></i>
                         </span>
                     </a>';
             } else{
-                $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="relink_job_worker" data-job_worker_id="' . $id . '" data-worker_name="'.$worker_name.'">
+                $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="relink_job_worker" data-job_worker_id="' . $id . '" data-worker_id="'.$worker_id.'" data-worker_name="'.$worker_name.'">
                     <i class="fs-2 las la-undo"></i>
                 </a>';
             }
         } else {
 
-            $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 confirmed_action" id="confirmed_job_worker" data-job_worker_id="' . $id . '">
+            $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 confirmed_action" id="confirmed_job_worker" data-job_worker_id="' . $id . '" data-worker_id="'.$worker_id.'">
                     <i class="fs-2 las la-check"></i>
                 </a>
 
-                <a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 declined_action" id="declined_job_worker" data-job_worker_id="' . $id . '">
+                <a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 declined_action" id="declined_job_worker" data-job_worker_id="' . $id . '" data-worker_id="'.$worker_id.'">
                     <i class="fs-2 las la-times"></i>
                 </a>
                 ';
@@ -1788,16 +1785,59 @@ class ClientController extends Controller
     }
 
     public function archiveClientJobWorker($id) {
+        DB::beginTransaction();
         try {
             $ClientJobWorker = ClientJobWorker::query()->where('id', $id)->first();
-            if ($ClientJobWorker['archived_at'])
-                return self::responseWithError('This worker is already archived.');
+            if ($ClientJobWorker['archived_at']) {
+                return self::responseWithError('This associate is already archived.');
+            }
 
-            $ClientJobWorker->update([
+            $jobShift = JobShift::query()->where('job_id', $ClientJobWorker['job_id'])
+                ->where('date', '>=', Carbon::now()->format('Y-m-d'))
+                ->get()
+                ->pluck('id');
+
+            if ($jobShift) {
+                $invitationShift = JobShiftWorker::query()->whereIn('job_shift_id', $jobShift)
+                    ->where('worker_id', $ClientJobWorker['worker_id'])
+                    ->whereNotNull('invited_at')
+                    ->whereNull('confirmed_at')
+                    ->whereNull('declined_at')
+                    ->whereNull('cancelled_at');
+
+                if ($invitationShift->count() > 0) {
+                    $invitationShift->update([
+                        'cancelled_at' => Carbon::now(),
+                        'cancelled_by' => 'admin',
+                        'cancelled_by_user_id' => Auth::id(),
+                        'last_updated_by' => Auth::id(),
+                    ]);
+                }
+
+                $confirmedShift = JobShiftWorker::query()->whereIn('job_shift_id', $jobShift)
+                    ->where('worker_id', $ClientJobWorker['worker_id'])
+                    ->whereNotNull('confirmed_at')
+                    ->whereNull('declined_at')
+                    ->whereNull('cancelled_at');
+
+                if ($confirmedShift->count() > 0) {
+                    $confirmedShift->update([
+                        'cancelled_at' => Carbon::now(),
+                        'cancelled_by' => 'admin',
+                        'cancelled_by_user_id' => Auth::id(),
+                        'last_updated_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            ClientJobWorker::query()->where('id', $id)->update([
                 'archived_at' => Carbon::now(),
             ]);
+
+            DB::commit();
             return self::responseWithSuccess('Associate successfully unlinked.');
         } catch (Exception $e) {
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
     }
@@ -1990,7 +2030,7 @@ class ClientController extends Controller
         $dateRange = $request->input('date_range');
         if ($dateRange != 'dates') {
             $startDate = Carbon::today()->format('Y-m-d');
-            $endDate = Carbon::today()->addDays($dateRange)->format('Y-m-d');
+            $endDate = Carbon::today()->addDays((int) $dateRange)->format('Y-m-d');
         } else {
 
             $startDate = Carbon::parse($request->input('booking_start_date'))->format('Y-m-d');
@@ -2262,8 +2302,9 @@ class ClientController extends Controller
             $startDate = Carbon::parse($pwData[$payroll_start_date_column]);
 
             $table_th = [];
+            $today = Carbon::today();
             for ($i = 0; $i < 7; $i++) {
-                $currentDate = $startDate->copy()->addDays($i)->format('Y-m-d');
+                $currentDate = $startDate->copy()->addDays((int) $i)->format('Y-m-d');
                 $jobShifts = JobShift::query()
                     ->where('job_id', $job_id)
                     ->whereDate('date', $currentDate)
@@ -2271,12 +2312,17 @@ class ClientController extends Controller
 
                 if ($jobShifts) {
                     $th = '<a href="'.url('view-job-shift/'.$jobShifts['id']).'" target="_blank" class="text-gray-600">
-                            <i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays($i)->format('D d').
+                            <i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays((int) $i)->format('D d').
                           '</a><br><span class="fs-5 fw-normal">'.Carbon::parse($jobShifts['start_time'])->format('Hi').'/'.$jobShifts['shift_length_hr'].'h'.$jobShifts['shift_length_min'].'m</span><br>';
                     $shiftTrueOrFalse = true;
                 } else {
-                    $th = '<i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays($i)->format('D d').'<br>
+                    $currentDateCarbon = Carbon::parse($currentDate);
+                    if ($currentDateCarbon->lt($today)) {
+                        $th = '<i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays((int) $i)->format('D d').'<br> <i class="fs-1 las la-plus-circle text-gray-500"></i>';
+                    } else {
+                        $th = '<i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays((int) $i)->format('D d').'<br>
                            <a href="javascript:;" id="create_job_shift_th_btn" data-create_shift_date="'.$currentDate.'"><i class="fs-1 las la-plus-circle text-primary"></i></a>';
+                    }
                     $shiftTrueOrFalse = false;
                 }
 
@@ -2306,7 +2352,7 @@ class ClientController extends Controller
 
                     $preparedRow['worker_detail'] = '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" class="fw-bolder fs-6 p-2" target="_blank">' . $fullName . '</a><br><span class="fw-normal p-2">' . $dob . '</span>';
                     for ($i = 0; $i < 7; $i++) {
-                        $shiftDate = $startDate->copy()->addDays($i)->format('Y-m-d');
+                        $shiftDate = $startDate->copy()->addDays((int) $i)->format('Y-m-d');
 
                         $preparedRow['day_'.$i+1] = JobHelper::getWorkerAvailabilityBox([
                             'job_id' => $job_id,
@@ -2511,6 +2557,39 @@ class ClientController extends Controller
 
             return self::responseWithSuccess('Associate successfully relinked.');
         } catch (Exception $e) {
+            return self::responseWithError($e->getMessage());
+        }
+    }
+
+    public function getClientJobWorkerFutureConfirmAndInvitationShift(Request $request) {
+        try {
+            $params = $request->input();
+            $jobShift = JobShift::query()->where('job_id', $params['job_id'])
+                ->where('date', '>=', Carbon::now()->format('Y-m-d'))
+                ->get()
+                ->pluck('id');
+
+            $invitationShift = JobShiftWorker::query()->whereIn('job_shift_id', $jobShift)
+                ->where('worker_id', $params['worker_id'])
+                ->whereNotNull('invited_at')
+                ->whereNull('confirmed_at')
+                ->whereNull('declined_at')
+                ->whereNull('cancelled_at')
+                ->count();
+
+            $confirmedShift = JobShiftWorker::query()->whereIn('job_shift_id', $jobShift)
+                ->where('worker_id', $params['worker_id'])
+                ->whereNotNull('confirmed_at')
+                ->whereNull('declined_at')
+                ->whereNull('cancelled_at')
+                ->count();
+
+            return self::responseWithSuccess('Future job shift count.', [
+                'invitation_shift_count' => $invitationShift,
+                'confirmed_shift_count' => $confirmedShift,
+                'total_count' => $invitationShift + $confirmedShift
+            ]);
+        } catch (\Exception $e) {
             return self::responseWithError($e->getMessage());
         }
     }

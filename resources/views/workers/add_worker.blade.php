@@ -13,11 +13,11 @@
                         <div id="kt_content_container" class="container-xxl">
                             <div class="mb-10">
                                 <div class="bg-primary p-10 fs-3 text-white rounded" id="screen_title">
-                                    <div class="small text-uppercase mb-1">ADD NEW WORKER</div>
+                                    <div class="small text-uppercase mb-1">ADD NEW ASSOCIATE</div>
                                     <h4 class="mb-0 fw-boldest text-white fs-1">Basic info</h4>
                                 </div>
                                 <div class="bg-success p-10 fw-boldest fs-1 text-white rounded d-none" id="worker_created_message">
-                                    Worker created!
+                                    Associate created!
                                 </div>
                             </div>
                             <div class="card">

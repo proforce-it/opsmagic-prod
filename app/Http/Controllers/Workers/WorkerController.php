@@ -142,6 +142,49 @@ class WorkerController extends Controller
                     ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
                     ->get()
                     ->toArray();
+
+            } else if ($filter == 'workers-have-worked-greater-than-12-days-in-a-row-2') {
+                $workersWorkedGreaterThan12Days_2 = Timesheet::query()->select('id', 'worker_id', 'date')
+                    ->when($cost_center != '', function ($query) use ($cost_center) {
+                        $query->whereHas('worker_details.worker_cost_center', function ($subQuery) use ($cost_center) {
+                            $subQuery->where('cost_center', $cost_center);
+                        });
+                    })
+                    ->whereBetween('date', [
+                        Carbon::now()->subDays(12)->format('Y-m-d'),
+                        Carbon::now()->subDay()->format('Y-m-d')
+                    ])
+                    ->with('worker_details')
+                    ->get()
+                    ->groupBy('worker_id')
+                    ->filter(function ($timesheets) {
+                        $sortedDates = $timesheets->sortBy('date')->pluck('date')->map(function ($date) {
+                            return Carbon::parse($date);
+                        });
+
+                        $consecutiveDays = 1;
+                        foreach ($sortedDates as $index => $date) {
+                            if (isset($sortedDates[$index + 1]) && $date->diffInDays($sortedDates[$index + 1]) === 1) {
+                                $consecutiveDays++;
+                                if ($consecutiveDays >= 12) {
+                                    return true;
+                                }
+                            } else {
+                                $consecutiveDays = 1;
+                            }
+                        }
+                        return false;
+                    })
+                    ->keys()
+                    ->all();
+
+                    $workers = Worker::query()->whereIn('id', array_unique($workersWorkedGreaterThan12Days_2))
+                        ->when(request('status') != null && request('status') != 'All', function ($q) {
+                            return $q->where('status', request('status'));
+                        })
+                        ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                        ->get()
+                        ->toArray();
             } else {
 
                 //List of all workers
@@ -186,7 +229,7 @@ class WorkerController extends Controller
             $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="delete_worker"
                 data-worker-id="'.$id.'"
                 data-worker-status="Archived"
-                data-text="Are you sure you want to archive this worker!"
+                data-text="Are you sure you want to archive this associate!"
                 data-btn-text="Yes, archive!"
                 data-btn-color="danger">
                 <i class="fs-2 las la-archive"></i>
@@ -195,7 +238,7 @@ class WorkerController extends Controller
             $action .= '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="delete_worker"
                 data-worker-id="'.$id.'"
                 data-worker-status="Active"
-                data-text="Are you sure you want to active this worker!"
+                data-text="Are you sure you want to active this associate!"
                 data-btn-text="Yes, active!"
                 data-btn-color="success">
                 <i class="fs-2 las la-undo"></i>
@@ -1835,11 +1878,11 @@ class WorkerController extends Controller
                         'name'          => $job_name,
                         'site'          => ($row['job']) ? ($row['job']['site_details']) ? $row['job']['site_details']['site_name'] : '' : '',
                         'client'        => ($row['job']) ? ($row['job']['client_details']) ? $row['job']['client_details']['company_name'] : '' : '',
-                        'invited_at'    => ($row['invited_at'] && $row['invitation_type'] == 1) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['invited_at'])).'"><i class="fas fa-circle text-success"></i></a>' : '<i class="fas fa-circle"></i>',
-                        'confirmed_at'  => ($row['confirmed_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['confirmed_at'])).'"><i class="fas fa-circle text-success"></i></a>' : '<i class="fas fa-circle"></i>',
-                        'declined_at'   => ($row['declined_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['declined_at'])).'"><i class="fas fa-circle text-success"></i></a>' : '<i class="fas fa-circle"></i>',
+                        'invited_at'    => ($row['invited_at'] && $row['invitation_type'] == 1) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['invited_at'])).'"><i class="bi bi-circle-fill text-warning"></i></a>' : '<i class="bi bi-circle"></i>',
+                        'confirmed_at'  => ($row['confirmed_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['confirmed_at'])).'"><i class="bi bi-circle-fill text-success"></i></a>' : '<i class="bi bi-circle"></i>',
+                        'declined_at'   => ($row['declined_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['declined_at'])).'"><i class="bi bi-circle-fill text-danger"></i></a>' : '<i class="bi bi-circle"></i>',
                         'no_shift'      => $shiftsCount,
-                        'action'        => $this->job_action($row['id'], $row['archived_at'], $row['job_id'], $worker_name, $job_name),
+                        'action'        => $this->job_action($row['id'], $row['archived_at'], $row['job_id'], $worker_name, $row['worker_id'], $job_name),
                     ];
                 }
             }
@@ -1854,14 +1897,17 @@ class WorkerController extends Controller
         }
     }
 
-    public function job_action($id, $archived, $job_id, $worker_name, $job_name) {
+    public function job_action($id, $archived, $job_id, $worker_name, $worker_id, $job_name) {
         $action = '';
         if ($archived == null) {
             $action .= '<a href="javascript:;" 
                 class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action" 
-                id="archive_job_worker" 
-                data-client_job_worker_id="'.$id.'" 
-                data-text="You want to unlink '.strtolower($worker_name).' from job - '.strtolower($job_name).'">
+                id="archive_job_worker"
+                data-job_worker_id="' . $id . '"
+                data-worker_id="'.$worker_id.'"
+                data-worker_name="'.$worker_name.'"
+                data-job_name="'.$job_name.'"
+                data-job_id="'.$job_id.'">
                    <i class="fs-2 las la-unlink"></i>
                 </a>';
         }

@@ -1,5 +1,18 @@
 <div class="tab-pane fade active show" id="kt_table_widget_5_tab_1">
     <div class="table-responsive">
+        @if(Carbon\Carbon::parse($worker['date_of_birth'])->age < 18)
+            <div class="ps-5">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="alert alert-custom alert-warning" role="alert">
+                            <div class="alert-text fs-4">
+                                <i class="las la-exclamation-triangle text-warning fs-xl-2"></i> This associate is a “young worker”. When assigning to shifts you must make sure you adhere to the following requirements: Max 8hours per day, Max. 40 hours per week, No night shifts (10pm-6am)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         <form id="basic_details_form">
             @csrf
             <div class="p-5">
@@ -48,16 +61,16 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label class="fs-6 required">Worker number</label>
-                            <input type="text" name="worker_no" id="worker_no" class="form-control bg-secondary" value="{{ $worker['worker_no'] }}" placeholder="Enter worker no" readonly>
+                            <label class="fs-6 required">Associate ID number</label>
+                            <input type="text" name="worker_no" id="worker_no" class="form-control bg-secondary" value="{{ $worker['worker_no'] }}" placeholder="Enter associate no" readonly>
                             <input type="hidden" name="update_id" id="basic_details_update_id" value="{{ $worker['id'] }}">
                             <span class="error text-danger" id="worker_no_error"></span>
                         </div>
                     </div>
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label class="fs-6">Employee Ref.</label> <!--Client reference-->
-                            <input type="text" name="client_reference" id="client_reference" class="form-control" value="{{ $worker['client_reference'] }}" placeholder="Enter client reference">
+                            <label class="fs-6">Client reference no.</label> <!--Client reference-->
+                            <input type="text" name="client_reference" id="client_reference" class="form-control" value="{{ $worker['client_reference'] }}" placeholder="Client’s ref. no. for the associate">
                             <span class="error text-danger" id="client_reference_error"></span>
                         </div>
                     </div>
@@ -70,7 +83,7 @@
                     </div>
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label class="fs-6">Payroll Ref.</label>
+                            <label class="fs-6">Payroll reference number</label>
                             <input type="text" name="payroll_reference" id="payroll_reference" class="form-control" value="{{ $worker['payroll_reference'] }}" placeholder="Enter payroll reference">
                             <span class="error text-danger" id="payroll_reference_error"></span>
                         </div>

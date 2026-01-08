@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api\Workers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Location\Country;
 use App\Models\Worker\Worker;
 use App\My_response\Traits\Response\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
@@ -38,19 +39,30 @@ class AuthController extends Controller
             return self::apiValidationError($validator->errors()->messages());
         }
 
-        if (!$token = auth('api')->attempt([
-            'email_address' => $request->input('email'),
-            'password' => $request->input('password'),
-        ])) {
+        $worker = Worker::query()->where('email_address', $request->input('email'))->first();
+        if (! $worker || ! Hash::check($request->input('password'), $worker->password)) {
             return self::responseWithError('Email or password is invalid.');
         }
 
-        $worker = auth('api')->user();
+        $token = $worker->createToken('worker-api-token')->accessToken;
         $worker->token = $token;
         $worker->save();
 
+        $country = Country::query()->where('nationality', $worker->nationality)->first();
         return self::responseWithSuccess('You are successfully logged in.', [
-            'token' => $token
+            'token' => $token,
+            'worker_no' => $worker->worker_no,
+            'title' => $worker->title,
+            'first_name' => $worker->first_name,
+            'middle_name' => $worker->middle_name,
+            'last_name' => $worker->last_name,
+            'date_of_birth' => date('d/m/Y', strtotime($worker->date_of_birth)),
+            'gender' => $worker->gender,
+            'email_address' => $worker->email_address,
+            'mobile_number' => $worker->mobile_number,
+            'permanent_country' => ($worker->same_as_current_address == 1) ? $worker->current_country : $worker->permanent_country,
+            'nationality' => $country?->name,
+            'profile_image' => $worker->profile_pic ? asset('workers/profile/' . $worker->profile_pic) : asset('assets/media/avatars/worker-square.png'),
         ]);
     }
 }

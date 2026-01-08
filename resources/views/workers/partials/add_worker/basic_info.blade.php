@@ -47,7 +47,7 @@
             <div class="row">
                 <div class="col-lg-6">
                     <div class="mb-10 fv-row fv-plugins-icon-container">
-                        <label class="fs-6 required">Worker number</label>
+                        <label class="fs-6 required">Associate ID number</label>
                         <input type="text" name="worker_no" id="worker_no" class="form-control bg-secondary" placeholder="Worker no" value="{{ $work_number['worker_number'] }}" readonly />
                         <input type="hidden" name="worker_number_year" id="worker_number_year" value="{{ $work_number['worker_number_year'] }}" />
                         <input type="hidden" name="worker_number_month" id="worker_number_month" value="{{ $work_number['worker_number_month'] }}" />
@@ -56,7 +56,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="mb-10 fv-row fv-plugins-icon-container">
-                        <label class="fs-6">Employee Ref.</label> <!--Client reference-->
+                        <label class="fs-6">Client reference no.</label> <!--Client reference-->
                         <input type="text" name="client_reference" id="client_reference" class="form-control" value="">
                         <span class="error text-danger" id="client_reference_error"></span>
                     </div>
@@ -70,7 +70,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="mb-10 fv-row fv-plugins-icon-container">
-                        <label class="fs-6">Payroll Ref.</label>
+                        <label class="fs-6">Payroll reference number</label>
                         <input type="text" name="payroll_reference" id="payroll_reference" class="form-control" value="">
                         <span class="error text-danger" id="payroll_reference_error"></span>
                     </div>

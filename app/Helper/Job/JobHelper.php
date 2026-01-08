@@ -67,7 +67,7 @@ class JobHelper
     public static function getWorkerAvailabilityBox($array, &$table_th) {
         $shift = self::getJobShift($array);
         if ($shift) {
-            $disabledAttr = (Carbon::parse($array['shift_date'])->isPast()) ? 'disabled' : '';
+            $isPast = Carbon::parse($array['shift_date'])->isPast();
             $dayData = JobShiftWorker::query()->where('worker_id', $array['worker_id'])
                 ->where('shift_date', $array['shift_date'])
                 ->with('jobShift')
@@ -87,40 +87,76 @@ class JobHelper
                 } elseif ($array['job_id'] != $dayData['jobShift']['job_id'] && $dayData['jobShift']['start_time'] != $shift['start_time']) {
                     $tooltipText = $dayData['jobShift']['client_job_details']['name'].' | '.$dayData['jobShift']['client_job_details']['site_details']['site_name'].' - '.$dayData['jobShift']['client_job_details']['client_details']['company_name'].' | Start '.date('H:i', strtotime($dayData['jobShift']['start_time'])).' | Duration '.$dayData['jobShift']['shift_length_hr'].'h'.$dayData['jobShift']['shift_length_min'].'m';
                     $tooltipText = htmlspecialchars($tooltipText, ENT_QUOTES);
-                    return <<<HTML
-                    <div class="bg-o_job position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-                        <div class="position-relative d-flex p-3" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" data-bs-title="{$tooltipText}">
-                            <div class="form-check form-check-sm form-check-custom">
-                                <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$dayData['worker_id']}_o/job" {$disabledAttr} />
-                                <label for="worker_checkbox_{$shift['id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 o_job-text">O/Job</label>
+                    if ($isPast) {
+                        return <<<HTML
+                            <div class="bg-o_job position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" data-bs-title="{$tooltipText}">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <label class="ms-7 fs-4 fw-bold ms-2 o_job-text">O/Job</label>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                HTML;
+                        HTML;
+                    } else {
+                        return <<<HTML
+                            <div class="bg-o_job position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" data-bs-title="{$tooltipText}">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$dayData['worker_id']}_o/job" />
+                                        <label for="worker_checkbox_{$shift['id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 o_job-text">O/Job</label>
+                                    </div>
+                                </div>
+                            </div>
+                        HTML;
+                    }
                 } elseif ($dayData['confirmed_at'] && $dayData['declined_at'] == null && $dayData['cancelled_at'] == null) {
                     $table_th['confirm'] = $table_th['confirm'] + 1;
-                    return <<<HTML
-                    <div class="bg-confirm position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-                        <div class="position-relative d-flex p-3">
-                            <div class="form-check form-check-sm form-check-custom">
-                                <input name="worker_availability_checkbox" id="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$dayData['job_shift_id']}_{$dayData['worker_id']}_confirmed" {$disabledAttr} />
-                                <label for="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 confirm-text">Conf.</label>
+                    if ($isPast) {
+                        return <<<HTML
+                            <div class="bg-confirm position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <label class="ms-7 fs-4 fw-bold ms-2 confirm-text">Conf.</label>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                HTML;
+                        HTML;
+                    } else {
+                        return <<<HTML
+                            <div class="bg-confirm position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <input name="worker_availability_checkbox" id="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$dayData['job_shift_id']}_{$dayData['worker_id']}_confirmed" />
+                                        <label for="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 confirm-text">Conf.</label>
+                                    </div>
+                                </div>
+                            </div>
+                        HTML;
+                    }
                 } elseif ($dayData['invited_at'] && $dayData['confirmed_at'] == null && $dayData['declined_at'] == null && $dayData['cancelled_at'] == null) {
                     $table_th['invited'] = $table_th['invited'] + 1;
-                    return <<<HTML
-                    <div class="bg-invited position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-                        <div class="position-relative d-flex p-3">
-                            <div class="form-check form-check-sm form-check-custom">
-                                <input name="worker_availability_checkbox" id="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$dayData['job_shift_id']}_{$dayData['worker_id']}_invited" {$disabledAttr} />
-                                <label for="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 invited-text">Invited</label>
+                    if ($isPast) {
+                        return <<<HTML
+                            <div class="bg-invited position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <label class="ms-7 fs-4 fw-bold ms-2 invited-text">Invited</label>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                HTML;
+                        HTML;
+                    } else {
+                        return <<<HTML
+                            <div class="bg-invited position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <input name="worker_availability_checkbox" id="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$dayData['job_shift_id']}_{$dayData['worker_id']}_invited" />
+                                        <label for="worker_checkbox_{$dayData['job_shift_id']}_{$dayData['worker_id']}" class="fs-4 fw-bold ms-2 invited-text">Invited</label>
+                                    </div>
+                                </div>
+                            </div>
+                        HTML;
+                    }
                 } elseif ($dayData['cancelled_at']) {
                     return <<<HTML
                     <div class="bg-gray-500 position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
@@ -146,16 +182,28 @@ class JobHelper
                 $available_worker = self::getAvailableWorker($array);
                 if ($available_worker) {
                     $table_th['available'] = $table_th['available'] + 1;
-                    return <<<HTML
-                        <div class="bg-available position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-                            <div class="position-relative d-flex p-3">
-                                <div class="form-check form-check-sm form-check-custom">
-                                    <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$available_worker['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$available_worker['worker_id']}_available" {$disabledAttr} />
-                                    <label for="worker_checkbox_{$shift['id']}_{$available_worker['worker_id']}" class="fs-4 fw-bold ms-2 available-text">Avail.</label>
+                    if ($isPast) {
+                        return <<<HTML
+                            <div class="bg-available position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <label class="ms-7 fs-4 fw-bold ms-2 available-text">Avail.</label>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    HTML;
+                        HTML;
+                    } else {
+                        return <<<HTML
+                            <div class="bg-available position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                <div class="position-relative d-flex p-3">
+                                    <div class="form-check form-check-sm form-check-custom">
+                                        <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$available_worker['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$available_worker['worker_id']}_available" />
+                                        <label for="worker_checkbox_{$shift['id']}_{$available_worker['worker_id']}" class="fs-4 fw-bold ms-2 available-text">Avail.</label>
+                                    </div>
+                                </div>
+                            </div>
+                        HTML;
+                    }
                 } else {
                     $ineligibleWorker = self::getIneligibleWorker($array, $shift['id']);
                     if ($ineligibleWorker) {
@@ -203,16 +251,28 @@ class JobHelper
                                             </div>
                                         HTML;
                                     } else {
-                                        return <<<HTML
-                                            <div class="bg-gray-500 position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
-                                                <div class="position-relative d-flex p-3">
-                                                    <div class="form-check form-check-sm form-check-custom">
-                                                        <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$absence['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$absence['worker_id']}_rest" {$disabledAttr} />
-                                                        <label for="worker_checkbox_{$shift['id']}_{$absence['worker_id']}" class="fs-4 fw-bold ms-2 text-white">Rest</label>
+                                        if ($isPast) {
+                                            return <<<HTML
+                                                <div class="bg-gray-500 position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                                    <div class="position-relative d-flex p-3">
+                                                        <div class="form-check form-check-sm form-check-custom">
+                                                            <label class="ms-7 fs-4 fw-bold ms-2 text-white">Rest</label>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        HTML;
+                                            HTML;
+                                        } else {
+                                            return <<<HTML
+                                                <div class="bg-gray-500 position-absolute rounded-2" style="top: 4px; left: 4px; right: 4px; bottom: 4px;"></div>
+                                                    <div class="position-relative d-flex p-3">
+                                                        <div class="form-check form-check-sm form-check-custom">
+                                                            <input name="worker_availability_checkbox" id="worker_checkbox_{$shift['id']}_{$absence['worker_id']}" class="form-check-input widget-9-check" type="checkbox" value="{$shift['id']}_{$absence['worker_id']}_rest" />
+                                                            <label for="worker_checkbox_{$shift['id']}_{$absence['worker_id']}" class="fs-4 fw-bold ms-2 text-white">Rest</label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            HTML;
+                                        }
                                     }
                                 }
                             }
