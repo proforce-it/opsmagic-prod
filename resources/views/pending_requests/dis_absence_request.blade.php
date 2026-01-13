@@ -20,7 +20,7 @@
                                             <span class="svg-icon svg-icon-1 position-absolute ms-6">
                                                 <i class="fs-2 las la-search"></i>
                                             </span>
-                                            <input type="text" data-kt-absence-request-table-filter="search" class="form-control form-control-solid w-250px ps-14" placeholder="Search absence requests" />
+                                            <input type="text" data-kt-absence-request-table-filter="search" class="form-control form-control-solid w-250px ps-14" placeholder="Search holiday requests" />
                                         </div>
                                         <!--end::Search-->
                                     </div>
@@ -85,7 +85,7 @@
         });
 
         $(document).on('click', '#approve_request', function () {
-            sweetAlertApproved('You want to approved this absence request!').then((result) => {
+            sweetAlertApproved('You want to approve this holiday request!').then((result) => {
                 if (result.value) {
                     $.ajax({
                         type    : 'post',
@@ -110,7 +110,7 @@
         });
 
         $(document).on('click', '#declined_request', function () {
-            sweetAlertUnapproved('You want to declined this absence request!').then((result) => {
+            sweetAlertUnapproved('You want to reject this holiday request!').then((result) => {
                 if (result.value) {
                     $.ajax({
                         type    : 'post',

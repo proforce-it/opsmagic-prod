@@ -142,7 +142,7 @@ function sweetAlertUnapproved(text = "you want to un-approved selected records?"
         icon                : "warning",
         showCancelButton    : true,
         buttonsStyling      : false,
-        confirmButtonText   : "Yes, declined!",
+        confirmButtonText   : "Yes, reject!",
         cancelButtonText    : "No, cancel",
         customClass         : {
             confirmButton       : "btn fw-bold btn-danger",

@@ -369,7 +369,7 @@ Route::middleware('auth')->group(function(){
 
     Route::post('/unlink-group-to-job-action', [App\Http\Controllers\Group\GroupController::class, 'unlinkGroupToJobAction']);
 
-    Route::get('/absence-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'getAbsenceRequest'])->name('dashboard_absence-requests');
+    Route::get('/holiday-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'getAbsenceRequest'])->name('dashboard_holiday-requests');
     Route::post('/absence-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'storeAbsenceRequest']);
     Route::post('/approved-pending-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'approvedPendingRequest']);
     Route::post('/declined-pending-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'declinedPendingRequest']);
@@ -377,4 +377,9 @@ Route::middleware('auth')->group(function(){
     Route::get('/address-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'getAddressRequest'])->name('dashboard_address-requests');
     Route::post('/address-request', [App\Http\Controllers\PendingRequest\PendingRequestController::class, 'storeAddressRequest']);
 
+    Route::get('/new-starters', [App\Http\Controllers\Payroll\NewStartersController::class, 'index'])->name('dashboard_new-starters');
+    Route::post('/new-starters-action', [App\Http\Controllers\Payroll\NewStartersController::class, 'newStartersAction']);
+
+    Route::get('/payroll-reference-uploader', [App\Http\Controllers\Payroll\PayrollReferenceUploaderController::class, 'index'])->name('dashboard_payroll-reference-uploader');
+    Route::post('/upload-payroll-reference-number', [App\Http\Controllers\Payroll\PayrollReferenceUploaderController::class, 'uploadPayrollReferenceNumber']);
 });

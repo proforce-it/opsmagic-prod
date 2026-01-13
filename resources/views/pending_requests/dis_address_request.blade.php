@@ -31,11 +31,10 @@
                                     <table class="table align-middle table-row-dashed fs-7 gy-3 bg-active-dark" id="address_request_datatable">
                                         <thead>
                                         <tr class="text-start text-muted fw-bolder fs-7 text-uppercase gs-0">
-                                            <th>ID</th>
                                             <th>Associate Name</th>
-                                            <th>Address</th>
-                                            <th>Mobile Number</th>
+                                            <th>Contact No.</th>
                                             <th>Generated at</th>
+                                            <th>Details</th>
                                             <th>Action</th>
                                         </tr>
                                         </thead>
@@ -69,21 +68,23 @@
                     <div class="fv-row">
                         <div class="row">
                             <div class="col-lg-12 text-uppercase gs-0 border-bottom-dashed border-secondary border-1 mb-3">
-                                <label class="fs-5 fw-bolder text-muted">Current address</label>
+                                <label class="fs-5 fw-bolder text-muted">Current details</label>
                             </div>
                             <div class="col-lg-12">
                                 <div class="fv-row fv-plugins-icon-container">
                                     <label class="fs-5 fw-bold" id="current_address"></label>
+                                    <label class="mt-4 fs-5 fw-bold" id="current_mobile_number"></label>
                                 </div>
                             </div>
                         </div>
                         <div class="row mt-10">
                             <div class="col-lg-12 text-uppercase gs-0 border-bottom-dashed border-secondary border-1 mb-3">
-                                <label class="fs-5 fw-bolder text-muted">Requested address</label>
+                                <label class="fs-5 fw-bolder text-muted">Requested details</label>
                             </div>
                             <div class="col-lg-12">
                                 <div class="fv-row fv-plugins-icon-container">
                                     <label class="fs-5 fw-bold" id="requested_address"></label>
+                                    <label class="mt-4 fs-5 fw-bold" id="requested_mobile_number"></label>
                                 </div>
                             </div>
                         </div>
@@ -109,12 +110,11 @@
                     },
                 },
                 "columns": [
-                    {"data": "request_id"},
                     {"data": "worker_name", "sClass":"text-left"},
-                    {"data": "address", "sClass":"text-left"},
-                    {"data": "mobile_number", "sClass":"text-center"},
-                    {"data": "generated_at", "sClass":"text-center"},
-                    {"data": "action", "width": "15%", "sClass": "text-center"}
+                    {"data": "mobile_number", "width": "20%", "sClass":"text-center"},
+                    {"data": "generated_at", "width": "20%", "sClass":"text-center"},
+                    {"data": "details", "width": "5%", "sClass": "text-center"},
+                    {"data": "action", "width": "10%", "sClass": "text-center"}
                 ],
                 "order": [[ 0, "desc" ]],
             });
@@ -151,7 +151,7 @@
         });
 
         $(document).on('click', '#declined_request', function () {
-            sweetAlertUnapproved('You want to declined this address request!').then((result) => {
+            sweetAlertUnapproved('You want to reject this address request!').then((result) => {
                 if (result.value) {
                     $.ajax({
                         type    : 'post',
@@ -178,6 +178,17 @@
             $("#worker_name").text($(this).attr('data-worker_name'));
             $("#current_address").text($(this).attr('data-current_address'));
             $("#requested_address").text($(this).attr('data-requested_address'));
+
+            let current_mobile_number = $(this).attr('data-current_mobile_number');
+            let requested_mobile_number = $(this).attr('data-requested_mobile_number');
+            if (current_mobile_number === requested_mobile_number) {
+                $("#current_mobile_number").addClass('d-none');
+                $("#requested_mobile_number").addClass('d-none');
+            } else {
+                $("#current_mobile_number").removeClass('d-none').text(current_mobile_number);
+                $("#requested_mobile_number").removeClass('d-none').text(requested_mobile_number);
+            }
+
             $("#view_address_modal").modal('show');
         });
 

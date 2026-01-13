@@ -29,6 +29,11 @@ class Timesheet extends Model
             ->with('worker_cost_center');
     }
 
+    public function worker_all_details() {
+        return $this->hasOne(Worker::class, 'id', 'worker_id')
+            ->with(['worker_cost_centres_with_name', 'latest_end_date_rights_to_work_details', 'id_documents', 'nationality_details']);
+    }
+
     public function shift_details() {
         return $this->hasMany(JobShift::class, 'job_id', 'job_id');
     }

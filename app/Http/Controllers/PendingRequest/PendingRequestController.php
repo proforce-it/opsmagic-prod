@@ -168,23 +168,21 @@ class PendingRequestController extends Controller
                     $requestedAddress = implode(', ', array_filter($addressParts, function ($value) { return !empty($value); }));
                     $worker_name = $row['worker']['first_name'].' '.$row['worker']['middle_name'].' '.$row['worker']['last_name'];
 
-                    $action = $this->action($row['id']);
-                    $action .= '<a href="javascript:;" 
-                        class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" 
-                        id="view_addresses"
-                        data-worker_name="'.strtolower($worker_name).'" 
-                        data-current_address="'.$currentAddress.'"
-                        data-requested_address="'.$requestedAddress.'">
-                            <i class="fs-2 las la-arrow-right"></i>
-                        </a>';
-
                     $array[] = [
-                        'request_id' => $row['id'],
                         'worker_name' => '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" target="_blank">'.$worker_name.'</a>',
-                        'address' => $requestedAddress,
-                        'mobile_number' => $requestedData['mobile_number'],
+                        'mobile_number' => $row->worker->mobile_number,
                         'generated_at' => date('d-m-Y h:i:s', strtotime($row['created_at'])),
-                        'action' => $action,
+                        'details' => '<a href="javascript:;" 
+                            class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" 
+                            id="view_addresses"
+                            data-worker_name="'.strtolower($worker_name).'" 
+                            data-current_address="'.$currentAddress.'"
+                            data-current_mobile_number="'.$row->worker->mobile_number.'"
+                            data-requested_address="'.$requestedAddress.'"
+                            data-requested_mobile_number="'.$requestedData['mobile_number'].'">
+                                <i class="fs-2 las la-eye"></i>
+                            </a>',
+                        'action' => $this->action($row['id']),
                     ];
                 }
             }

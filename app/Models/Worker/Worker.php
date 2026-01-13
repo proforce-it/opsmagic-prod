@@ -7,6 +7,7 @@ use App\Models\Activity\ActivityLog;
 use App\Models\Client\ClientJobWorker;
 use App\Models\Group\Group;
 use App\Models\Job\JobShiftWorker;
+use App\Models\Location\Country;
 use App\Models\Note\Note;
 use App\Models\PickUpPoint\PickUpPoint;
 use App\Models\Timesheet\Timesheet;
@@ -98,5 +99,15 @@ class Worker extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_with_workers', 'worker_id', 'group_id')
             ->withTimestamps()
             ->withPivot('deleted_at'); // Include 'deleted_at' if using soft deletes
+    }
+
+    public function worker_cost_centres_with_name() {
+        return $this->hasMany(WorkerCostCenter::class, 'worker_id', 'id')
+            ->join('cost_centres', 'worker_cost_centers.cost_center', '=', 'cost_centres.id')
+            ->select('worker_cost_centers.worker_id', 'cost_centres.id as cost_center_id', 'cost_centres.short_code as cost_center_short_code');
+    }
+
+    public function nationality_details() {
+        return $this->hasOne(Country::class, 'nationality', 'nationality');
     }
 }

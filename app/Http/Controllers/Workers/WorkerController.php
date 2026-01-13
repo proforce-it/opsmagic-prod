@@ -108,6 +108,7 @@ class WorkerController extends Controller
 
                 //Workers have worked >12 days in a row
                 $workersWorkedGreaterThan12Days = Timesheet::query()->select('id', 'worker_id', 'date')
+                    ->whereDate('date', '>=', Carbon::today()->subWeeks(4)->startOfDay())
                     ->when($cost_center != '', function ($query) use ($cost_center) {
                         $query->whereHas('worker_details.worker_cost_center', function ($subQuery) use ($cost_center) {
                             $subQuery->where('cost_center', $cost_center);
@@ -117,19 +118,21 @@ class WorkerController extends Controller
                     ->get()
                     ->groupBy('worker_id')
                     ->filter(function ($timesheets) {
-                        $sortedDates = $timesheets->sortBy('date')->pluck('date')->map(function ($date) {
-                            return Carbon::parse($date);
-                        });
+                        $dates = $timesheets
+                            ->sortBy('date')
+                            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+                            ->unique()
+                            ->values();
 
-                        $consecutiveDays = 1;
-                        foreach ($sortedDates as $index => $date) {
-                            if (isset($sortedDates[$index + 1]) && $date->diffInDays($sortedDates[$index + 1]) === 1) {
-                                $consecutiveDays++;
-                                if ($consecutiveDays >= 12) {
+                        $streak = 1;
+                        for ($i = 0; $i < $dates->count() - 1; $i++) {
+                            if (Carbon::parse($dates[$i])->addDay()->eq(Carbon::parse($dates[$i + 1]))) {
+                                $streak++;
+                                if ($streak >= 12) {
                                     return true;
                                 }
                             } else {
-                                $consecutiveDays = 1;
+                                $streak = 1;
                             }
                         }
                         return false;
@@ -158,19 +161,21 @@ class WorkerController extends Controller
                     ->get()
                     ->groupBy('worker_id')
                     ->filter(function ($timesheets) {
-                        $sortedDates = $timesheets->sortBy('date')->pluck('date')->map(function ($date) {
-                            return Carbon::parse($date);
-                        });
+                        $dates = $timesheets
+                            ->sortBy('date')
+                            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+                            ->unique()
+                            ->values();
 
-                        $consecutiveDays = 1;
-                        foreach ($sortedDates as $index => $date) {
-                            if (isset($sortedDates[$index + 1]) && $date->diffInDays($sortedDates[$index + 1]) === 1) {
-                                $consecutiveDays++;
-                                if ($consecutiveDays >= 12) {
+                        $streak = 1;
+                        for ($i = 0; $i < $dates->count() - 1; $i++) {
+                            if (Carbon::parse($dates[$i])->addDay()->eq(Carbon::parse($dates[$i + 1]))) {
+                                $streak++;
+                                if ($streak >= 12) {
                                     return true;
                                 }
                             } else {
-                                $consecutiveDays = 1;
+                                $streak = 1;
                             }
                         }
                         return false;

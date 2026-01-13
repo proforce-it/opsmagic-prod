@@ -224,6 +224,36 @@
                         <span class="menu-title text-white">Financial report</span>
                     </a>
                 </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{{ url('new-starters') }}">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <i class="fs-2 las la-user-plus"></i>
+                            </span>
+                        </span>
+                        <span class="menu-title text-white">New starters</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="javascript:;">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <i class="fs-2 las la-list-ul"></i>
+                            </span>
+                        </span>
+                        <span class="menu-title text-white">Missing payroll numbers</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="javascript:;">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <i class="fs-2 las la-list-alt"></i>
+                            </span>
+                        </span>
+                        <span class="menu-title text-white">Payroll no. uploader</span>
+                    </a>
+                </div>
 
                 <div class="menu-item">
                     <div class="menu-content pt-8">
@@ -232,13 +262,13 @@
                 </div>
 
                 <div class="menu-item">
-                    <a class="menu-link" href="{{ url('absence-request') }}">
+                    <a class="menu-link" href="{{ url('holiday-request') }}">
                             <span class="menu-icon">
                                 <span class="svg-icon svg-icon-2">
                                     <i class="fs-2 las la-clipboard-list"></i>
                                 </span>
                             </span>
-                        <span class="menu-title text-white">Absence requests</span>
+                        <span class="menu-title text-white">Holiday requests</span>
                     </a>
                 </div>
 
