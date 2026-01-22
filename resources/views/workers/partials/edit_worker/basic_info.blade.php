@@ -84,8 +84,24 @@
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
                             <label class="fs-6">Payroll reference number</label>
-                            <input type="text" name="payroll_reference" id="payroll_reference" class="form-control" value="{{ $worker['payroll_reference'] }}" placeholder="Enter payroll reference">
-                            <span class="error text-danger" id="payroll_reference_error"></span>
+                                @php($payrollRef = $worker['worker_payroll_references']['payroll_reference'] ?? null)
+                                @if(Auth::user()->user_type !== 'Payroll')
+                                    <input type="text"
+                                           name="payroll_reference"
+                                           id="payroll_reference"
+                                           class="form-control bg-secondary"
+                                           value="{{ $payrollRef }}"
+                                           placeholder="{{ $payrollRef ? '' : 'No active payroll reference' }}"
+                                           readonly>
+                                @else
+                                    <input type="text"
+                                           name="payroll_reference"
+                                           id="payroll_reference"
+                                           class="form-control"
+                                           value="{{ $payrollRef }}"
+                                           placeholder="{{ $payrollRef ? '' : 'No active payroll reference' }}">
+                                @endif
+                                <span class="error text-danger" id="payroll_reference_error"></span>
                         </div>
                     </div>
                     <div class="col-lg-6">
@@ -168,9 +184,9 @@
                             <label class="fs-6 required">Marital status</label>
                             <select name="marital_status" id="marital_status" class="form-select form-select-lg" data-control="select2" data-placeholder="Select..." data-allow-clear="true">
                                 <option></option>
-                                <option {{ ($worker['marital_status'] == "Married") ? 'selected' : '' }} value="Married">Married</option>
                                 <option {{ ($worker['marital_status'] == "Single") ? 'selected' : '' }} value="Single">Single</option>
-                                <option {{ ($worker['marital_status'] == "Co-habiting") ? 'selected' : '' }} value="Co-habiting">Co-habiting</option>
+                                <option {{ ($worker['marital_status'] == "Married") ? 'selected' : '' }} value="Married">Married</option>
+<!--                                <option value="Co-habiting">Co-habiting</option>--> {{--{{ //($worker['marital_status'] == "Co-habiting") ? 'selected' : '' }}--}}
                             </select>
                             <span class="error text-danger" id="marital_status_error"></span>
                         </div>
@@ -182,7 +198,7 @@
                                 <option></option>
                                 @if($nationality)
                                     @foreach($nationality as $nRow)
-                                        <option {{ ($worker['nationality'] == $nRow['nationality']) ? 'selected' : '' }} value="{{ $nRow['nationality'] }}">{{ $nRow['nationality'] }}</option>
+                                        <option {{ ($worker['nationality'] == $nRow['id']) ? 'selected' : '' }} value="{{ $nRow['id'] }}">{{ $nRow['nationality'] }}</option>
                                     @endforeach
                                 @endif
                             </select>

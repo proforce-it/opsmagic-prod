@@ -26,6 +26,7 @@ use App\Models\Location\Country;
 use App\Models\Location\State;
 use App\Models\Note\Note;
 use App\Models\Payroll\PayrollWeekDate;
+use App\Models\Payroll\WorkerPayrollReference;
 use App\Models\PickUpPoint\PickUpPoint;
 use App\Models\Timesheet\Timesheet;
 use App\Models\Worker\Absence;
@@ -76,7 +77,7 @@ class WorkerController extends Controller
                     ->whereHas('rights_to_work_details', function ($query) use ($startDate, $alertEndDate)  {
                         $query->whereBetween('end_date', [$startDate, $alertEndDate]);
                     })
-                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
                     ->get()
                     ->toArray();
 
@@ -100,7 +101,7 @@ class WorkerController extends Controller
 
                 $workers = Worker::query()->whereIn('id', array_unique($shiftWorkersWithoutPayroll))
                     ->when(request('status') != null && request('status') != 'All', function ($q) { return $q->where('status', request('status')); })
-                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
                     ->get()
                     ->toArray();
 
@@ -142,7 +143,7 @@ class WorkerController extends Controller
 
                 $workers = Worker::query()->whereIn('id', array_unique($workersWorkedGreaterThan12Days))
                     ->when(request('status') != null && request('status') != 'All', function ($q) { return $q->where('status', request('status')); })
-                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
                     ->get()
                     ->toArray();
 
@@ -187,7 +188,7 @@ class WorkerController extends Controller
                         ->when(request('status') != null && request('status') != 'All', function ($q) {
                             return $q->where('status', request('status'));
                         })
-                        ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                        ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
                         ->get()
                         ->toArray();
             } else {
@@ -195,7 +196,7 @@ class WorkerController extends Controller
                 //List of all workers
                 $workers = Worker::query()
                     ->when(request('status') != null && request('status') != 'All', function ($q) { return $q->where('status', request('status')); })
-                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents'])
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
                     ->get()
                     ->toArray();
             }
@@ -394,7 +395,7 @@ class WorkerController extends Controller
                 'worker_no'                 => $params['worker_no'],
                 'client_reference'          => $params['client_reference'],
                 'national_insurance_number' => $params['national_insurance_number'],
-                'payroll_reference'         => $params['payroll_reference'],
+//                'payroll_reference'         => $params['payroll_reference'],
                 'email_address'             => $params['email_address'],
                 'mobile_number'             => $params['mobile_number'],
                 'date_of_birth'             => date('Y-m-d', strtotime($params['date_of_birth'])),
@@ -413,6 +414,13 @@ class WorkerController extends Controller
                 WorkerCostCenter::query()->create([
                     'worker_id'   => $worker['id'],
                     'cost_center' => $costCenter,
+                ]);
+            }
+
+            if(!empty($params['payroll_reference'])){
+                WorkerPayrollReference::query()->create([
+                    'worker_id' => $worker['id'],
+                    'payroll_reference' => $params['payroll_reference']
                 ]);
             }
 
@@ -588,12 +596,14 @@ class WorkerController extends Controller
     }*/
 
     public function viewWorker($id) {
-        $worker      = Worker::query()->where('id', $id)->with([
-            'worker_cost_center', 'rights_to_work_details', 'incomplete_rights_to_work_details', 'worker_documents', 'id_documents', 'accommodation_details', 'groups'
+        $worker = Worker::query()->where('id', $id)->with([
+            'worker_cost_center', 'rights_to_work_details', 'incomplete_rights_to_work_details', 'worker_documents', 'id_documents', 'accommodation_details', 'groups', 'worker_payroll_references'
         ])->first()->toArray();
-        $country     = Country::query()->get();
-        //$nationality = Nationality::query()->get();
+
+        $country = Country::query()->get();
+
         $nationality = Country::query()->select(['id', 'nationality'])->get();
+
         $client = Client::query()->orderBy('company_name', 'asc')->get();
 
         $allNotes = Note::query()->where('note_type', 'criminal')
@@ -636,7 +646,7 @@ class WorkerController extends Controller
             ->get();
 
         $assignedGroupIds = GroupWithWorker::where('worker_id', $id)
-            ->whereNull('deleted_at') // only active assignments
+            ->whereNull('deleted_at')
             ->pluck('group_id')
             ->toArray();
 
@@ -647,7 +657,7 @@ class WorkerController extends Controller
             ->whereNotIn('id', $assignedGroupIds)
             ->get();
 
-        $costCentre = CostCentre::query()->orderBy('short_code', 'asc')->get();
+        $costCentre = CostCentre::query()->orderBy('short_code')->get();
         return view('workers.view_worker', compact('worker', 'nationality', 'country', 'client', 'allNotes', 'accommodation_site', 'pickup_point', 'group', 'costCentre'));
     }
 
@@ -905,6 +915,7 @@ class WorkerController extends Controller
     }
 
     public function updateWorkerBasicDetails(Request $request) {
+        DB::beginTransaction();
         try {
             $validator = Validator::make($request->input(), [
                 'title'             => 'required',
@@ -923,24 +934,55 @@ class WorkerController extends Controller
                 'date_of_birth.required' => 'The date of birth must be a date before -16 years'
             ]);
 
-            if($validator->errors()->messages())
+            if($validator->errors()->messages()) {
+                DB::rollBack();
                 return self::validationError($validator->errors()->messages());
+            }
 
             $params = $request->input();
             $costCenter = $params['cost_center'];
-
-
             $params['date_of_birth'] = date('Y-m-d', strtotime($params['date_of_birth']));
 
-            $fields = ['title', 'first_name', 'middle_name', 'last_name', 'worker_no', 'client_reference', 'national_insurance_number', 'payroll_reference', 'mobile_number', 'email_address', 'date_of_birth', 'gender', 'marital_status', 'nationality'];
-            ActivityLogs::updatesLog(
-                $params['update_id'],
+            $fields = ['title', 'first_name', 'middle_name', 'last_name', 'worker_no', 'client_reference', 'national_insurance_number', 'mobile_number', 'email_address', 'date_of_birth', 'gender', 'marital_status', 'nationality'];
+            $workerData = Worker::query()->select($fields)
+                ->where('id', $params['update_id'])
+                ->first()
+                ->toArray();
+
+            if (!$workerData) {
+                throw new \Exception('Worker details not found, please try again later.');
+            }
+
+            if (Auth::user()->user_type == 'Payroll' && $params['payroll_reference']) {
+                $payrollDetails = WorkerPayrollReference::query()->where('worker_id', $params['update_id'])
+                    ->whereNull('expires_on')
+                    ->orderByDesc('id')
+                    ->first();
+                if ($payrollDetails) {
+                    WorkerPayrollReference::query()->where('id', $payrollDetails['id'])
+                        ->update([
+                            'payroll_reference' => $params['payroll_reference']
+                        ]);
+                    $workerData['payroll_reference'] = $payrollDetails['payroll_reference'];
+                } else {
+                    WorkerPayrollReference::query()->create([
+                        'worker_id' => $params['update_id'],
+                        'payroll_reference' => $params['payroll_reference']
+                    ]);
+                    $workerData['payroll_reference'] = '';
+                }
+                $fields[] = 'payroll_reference';
+            }
+
+            ActivityLogs::updatesLog($params['update_id'],
                 'Worker update',
-                $request->only($fields),
-                Worker::query()->select($fields)->where('id', $params['update_id'])->first()->toArray(),
+                array_merge(
+                    $request->only($fields),
+                    ['date_of_birth' => $params['date_of_birth']]
+                ),
+                $workerData,
                 'Worker'
             );
-
             Worker::query()->where('id', $params['update_id'])->update([
                 'title' => $params['title'],
                 'first_name' => $params['first_name'],
@@ -949,18 +991,12 @@ class WorkerController extends Controller
                 'worker_no' => $params['worker_no'],
                 'client_reference' => $params['client_reference'],
                 'national_insurance_number' => $params['national_insurance_number'],
-                'payroll_reference' => $params['payroll_reference'],
                 'mobile_number' => $params['mobile_number'],
                 'email_address' => $params['email_address'],
                 'date_of_birth' => $params['date_of_birth'],
                 'gender' => $params['gender'],
                 'marital_status' => $params['marital_status'],
                 'nationality' => $params['nationality']
-                /*'name_of_partner' => $params['name_of_partner'],
-                'id_number_of_partner' => $params['id_number_of_partner'],*/
-                /*'bank_ifsc_code' => $params['bank_ifsc_code'],
-                'bank_account_number' => $params['bank_account_number'],
-                'bank_name' => $params['bank_name']*/
             ]);
 
             if (!empty($costCenter)) {
@@ -970,8 +1006,11 @@ class WorkerController extends Controller
                 );
             }
 
+            DB::commit();
             return self::responseWithSuccess('Basic details successfully updated.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            return $e;
             return self::responseWithError($e->getMessage());
         }
     }
@@ -1582,12 +1621,14 @@ class WorkerController extends Controller
     }*/
 
     public function updateWorkerStatus(Request $request) {
+        DB::beginTransaction();
         try {
             $params = $request->input();
 
             $worker = Worker::query()->select(['id', 'status', 'suspend'])->where('id', $params['worker_id'])->first();
-            if (!$worker)
-                return self::responseWithError('Worker details not found, Please passed valid worker id');
+            if (!$worker) {
+                throw new \Exception('Worker details not found, Please passed valid worker id');
+            }
 
             if (in_array($params['status'], ['Suspend', 'Unsuspend'])) {
                 $worker->update([
@@ -1595,13 +1636,28 @@ class WorkerController extends Controller
                 ]);
             } else {
                 ActivityLogs::updatesLog($params['worker_id'], 'Worker update', [ 'status' => $params['status']], Worker::query()->select(['status'])->where('id', $params['worker_id'])->first()->toArray(), 'Worker');
+
+                if ($params['status'] == 'Archived') {
+                    $payrollReferenceNumber = WorkerPayrollReference::query()->where('worker_id', $params['worker_id'])
+                        ->whereNull('expires_on')
+                        ->orderBy('id', 'desc')
+                        ->first();
+                    if ($payrollReferenceNumber) {
+                        WorkerPayrollReference::query()->where('id', $payrollReferenceNumber['id'])->update([
+                            'expires_on' => Carbon::now()
+                        ]);
+                    }
+                }
+
                 $worker->update([
                     'status' => $params['status']
                 ]);
             }
 
+            DB::commit();
             return self::responseWithSuccess('Worker status successfully updated.');
         } catch (Exception $e) {
+            DB::rollBack();
             return self::responseWithError($e->getMessage());
         }
     }
@@ -1905,8 +1961,8 @@ class WorkerController extends Controller
     public function job_action($id, $archived, $job_id, $worker_name, $worker_id, $job_name) {
         $action = '';
         if ($archived == null) {
-            $action .= '<a href="javascript:;" 
-                class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action" 
+            $action .= '<a href="javascript:;"
+                class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action"
                 id="archive_job_worker"
                 data-job_worker_id="' . $id . '"
                 data-worker_id="'.$worker_id.'"

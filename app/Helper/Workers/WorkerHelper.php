@@ -64,7 +64,7 @@ class WorkerHelper
             $flags .= '<span class="badge border border-warning text-warning bg-transparent me-1 mb-1 cursor-pointer go_to_tab" data-tab_hash="kt_table_widget_5_tab_1">NI</span>';
         }
 
-        if (!$worker['payroll_reference']) {
+        if (!$worker['worker_payroll_references']) {
             $flags .= '<span class="badge border border-warning text-warning bg-transparent me-1 mb-1">PAYROLL</span>';
         }
 

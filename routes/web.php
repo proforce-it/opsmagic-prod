@@ -49,11 +49,7 @@ Route::get('/queue-work', function () {
 Route::get('/create-payroll-week-date-entries', [App\Http\Controllers\Dashboards\CreatePayrollWeekDateEntries::class, 'index']);
 
 // UPDATE COST CENTRES NAME TO ID IN DATABASE
-Route::get('/update-site-cost-centres', [App\Http\Controllers\HomeController::class, 'updateSiteCostCentres']);
-Route::get('/update-client-job-worker-cost-centres', [App\Http\Controllers\HomeController::class, 'updateClientJobWorkerCostCentres']);
-Route::get('/update-worker-cost-centres', [App\Http\Controllers\HomeController::class, 'updateWorkerCostCentres']);
-Route::get('/update-accommodation-cost-centres', [App\Http\Controllers\HomeController::class, 'updateAccommodationCostCentres']);
-Route::get('/update-pickup-point-cost-centres', [App\Http\Controllers\HomeController::class, 'updatePickupPointCostCentres']);
+Route::get('/update-nationality-id-in-worker-table', [App\Http\Controllers\HomeController::class, 'updateNationalityIdInWorkerTable']);
 
 Route::get('/', function () { return view('theme.auth.partials.login'); });
 //Route::get('login', function () { return view('theme.auth.partials.login'); });

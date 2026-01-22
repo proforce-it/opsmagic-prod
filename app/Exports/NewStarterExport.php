@@ -5,10 +5,12 @@ namespace App\Exports;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class NewStarterExport implements FromCollection, WithHeadings, WithMapping
+class NewStarterExport implements FromCollection, WithHeadings, WithMapping, WithColumnFormatting
 {
     use Exportable;
 
@@ -16,7 +18,7 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping
 
     public function __construct($workers)
     {
-        $this->workers = $workers; // Pass array of workers with first_working_date and worker_details
+        $this->workers = $workers;
     }
 
     public function collection()
@@ -60,7 +62,7 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping
 
     public function map($worker): array
     {
-        $details = $worker['worker_details'];
+        $details = $worker['worker_all_details'];
 
         $rtwNumber = '';
         if (isset($details['latest_end_date_rights_to_work_details'])) {
@@ -115,6 +117,15 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping
             isset($worker['first_working_date'])
                 ? Carbon::parse($worker['first_working_date'])->format('d/m/Y')
                 : ''
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'I' => NumberFormat::FORMAT_NUMBER,   // mobile
+            'M' => NumberFormat::FORMAT_NUMBER,   // id_doc_number
+            'AA' => NumberFormat::FORMAT_NUMBER,   // next_of_kin_phone
         ];
     }
 }

@@ -11,7 +11,7 @@
                     <div class="post d-flex flex-column-fluid" id="kt_post">
                         <div id="kt_content_container" class="container-xxl">
                             <div class="card">
-                                <form id="report_form">
+                                <form id="report_form" method="post" action="{{ url('new-starters-action') }}">
                                     @csrf
                                     <div class="card-body py-4 collapsible_content mt-5">
                                         <div class="w-100">
@@ -34,10 +34,10 @@
                                                         <div class="mb-10 fv-row fv-plugins-icon-container">
                                                             <label for="cost_center" class="text-muted fs-6 fw-bold">Cost center</label>
                                                             <select name="cost_center" id="cost_center" class="form-select form-select-lg" data-control="select2" data-placeholder="Any..." data-allow-clear="true">
-                                                                <option value="Any">Any...</option>
+                                                                <option {{ old('cost_center', 'Any') == 'Any' ? 'selected' : '' }} value="Any">Any...</option>
                                                                 @if($costCentre)
                                                                     @foreach($costCentre as $cc_row)
-                                                                        <option value="{{ $cc_row['id'] }}">{{ $cc_row['short_code'] }}</option>
+                                                                        <option {{ old('cost_center') == $cc_row['id'] ? 'selected' : '' }} value="{{ $cc_row['id'] }}">{{ $cc_row['short_code'] }}</option>
                                                                     @endforeach
                                                                 @endif
                                                             </select>
@@ -58,9 +58,11 @@
                                                                 <span class="svg-icon svg-icon-2 position-absolute mx-4">
                                                                     <i class="fs-2 las la-calendar"></i>
                                                                 </span>
-                                                                <input class="form-control ps-12 flatpickr-input date_input " placeholder="Select start date" name="start_date" id="start_date" type="text" value=""> <!--readonly="readonly"-->
+                                                                <input class="form-control ps-12 flatpickr-input date_input " placeholder="Select start date" name="start_date" id="start_date" type="text" value="{{ old('start_date') }}">
                                                             </div>
-                                                            <span class="text-danger error" id="start_date_error"></span>
+                                                            @if ($errors->has('start_date'))
+                                                                <span class="text-danger">{{ $errors->first('start_date') }}</span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-6">
@@ -70,9 +72,11 @@
                                                                 <span class="svg-icon svg-icon-2 position-absolute mx-4">
                                                                     <i class="fs-2 las la-calendar"></i>
                                                                 </span>
-                                                                <input class="form-control ps-12 flatpickr-input date_input" placeholder="Select end date" name="end_date" id="end_date" type="text" readonly="readonly" value="">
+                                                                <input class="form-control ps-12 flatpickr-input date_input" placeholder="Select end date" name="end_date" id="end_date" type="text" readonly="readonly" value="{{ old('end_date') }}">
                                                             </div>
-                                                            <span class="text-danger error" id="end_date_error"></span>
+                                                            @if ($errors->has('end_date'))
+                                                                <span class="text-danger">{{ $errors->first('end_date') }}</span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -99,72 +103,51 @@
 
 @section('js')
     <script>
-        let start_date = $("#start_date");
-        start_date.flatpickr({
-            dateFormat  : "d-m-Y",
-            allowInput: true
+        $(document).ready(function () {
+            $('#cost_center').val("{{ old('cost_center') }}").trigger('change');
         });
 
-        start_date.on('change', function () {
-            let end_date_box = $("#end_date");
-            end_date_box.val('');
+        let startDateInput = document.getElementById('start_date');
+        let endDateInput   = document.getElementById('end_date');
+        let endPicker = null;
 
-            let value   = $(this).val();
-            let dateAr  = value.split('-');
-            let date    = dateAr[1] + '-' + dateAr[0] + '-' + dateAr[2];
+        let startPicker = flatpickr(startDateInput, {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            onChange: function (selectedDates, dateStr) {
+                enableEndDate(dateStr, true);
+            }
+        });
 
-            let newDate         = new Date(date);
-            let currentMonth    = newDate.getMonth();
-            let currentDate     = newDate.getDate();
-            let currentYear     = newDate.getFullYear();
+        function enableEndDate(startDateStr, clearEnd = false) {
+            if (!startDateStr) return;
 
-            end_date_box.prop('disabled', false)
-            end_date_box.flatpickr({
-                minDate: new Date(currentYear, currentMonth, currentDate),
-                dateFormat  : "d-m-Y",
-                allowInput: true
+            let parts = startDateStr.split('-');
+            let minDate = new Date(parts[2], parts[1] - 1, parts[0]);
+
+            endDateInput.disabled = false;
+
+            if (endPicker) {
+                endPicker.destroy();
+            }
+
+            endPicker = flatpickr(endDateInput, {
+                dateFormat: "d-m-Y",
+                allowInput: true,
+                minDate: minDate
             });
-        });
 
-        $("#report_form").on('submit', function (e) {
-            $(".error").html('');
-            e.preventDefault();
+            if (clearEnd) {
+                endPicker.clear();
+            }
 
-            $("#report_form_submit_btn").addClass('d-none');
-            $("#report_form_process_btn").removeClass('d-none');
+            @if (old('end_date'))
+                endPicker.setDate("{{ old('end_date') }}", true);
+            @endif
+        }
 
-            $.ajax({
-                type        : 'post',
-                url         : '{{ url('new-starters-action') }}',
-                data        : new FormData($(this)[0]),
-                contentType : false,
-                processData : false,
-                cache       : false,
-                success     : function (response) {
-                    decodeResponse(response)
-
-                    $("#report_form_submit_btn").removeClass('d-none');
-                    $("#report_form_process_btn").addClass('d-none');
-
-                    if(response.code === 200) {
-                        const blob = new Blob([response.data.csv], { type: 'text/csv;charset=utf-8;' });
-                        const link = document.createElement("a");
-                        const url = URL.createObjectURL(blob);
-                        link.setAttribute("href", url);
-                        link.setAttribute("download", response.data.fileName);
-                        link.style.visibility = 'hidden';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    }
-                },
-                error   : function (response) {
-                    toastr.error(response.statusText);
-
-                    $("#report_form_submit_btn").removeClass('d-none');
-                    $("#report_form_process_btn").addClass('d-none');
-                }
-            });
-        });
+        if (startDateInput.value) {
+            enableEndDate(startDateInput.value);
+        }
     </script>
 @endsection

@@ -193,7 +193,7 @@ class WorkerUploaderController extends Controller
             }
         }
 
-        $nationalityCheck = Country::query()->where('nationality', $row[26])->exists();
+        $nationalityCheck = Country::query()->where('nationality', $row[26])->first();
         if (!$nationalityCheck) {
             throw new \Exception("Please provide valid nationality.");
         }
@@ -233,7 +233,7 @@ class WorkerUploaderController extends Controller
             'permanent_city'                => ($row[20] == 'No') ? $row[23] : null,
             'permanent_post_code'           => ($row[20] == 'No') ? $row[24] : null,
             'permanent_country'             => ($row[20] == 'No') ? $row[25] : null,
-            'nationality'                   => $row[26],
+            'nationality'                   => $nationalityCheck['id'],
             /*'same_as_current_address_for_next_of_kin' => ($row[27] == 'Yes') ? 1 : 0,
             'next_of_kin_first_name'        => $row[28],
             'next_of_kin_last_name'         => $row[29],

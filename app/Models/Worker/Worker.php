@@ -9,6 +9,7 @@ use App\Models\Group\Group;
 use App\Models\Job\JobShiftWorker;
 use App\Models\Location\Country;
 use App\Models\Note\Note;
+use App\Models\Payroll\WorkerPayrollReference;
 use App\Models\PickUpPoint\PickUpPoint;
 use App\Models\Timesheet\Timesheet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -108,6 +109,12 @@ class Worker extends Authenticatable
     }
 
     public function nationality_details() {
-        return $this->hasOne(Country::class, 'nationality', 'nationality');
+        return $this->hasOne(Country::class, 'id', 'nationality');
+    }
+
+    public function worker_payroll_references() {
+        return $this->hasOne(WorkerPayrollReference::class, 'worker_id', 'id')
+            ->whereNull('expires_on')
+            ->orderByDesc('id');
     }
 }

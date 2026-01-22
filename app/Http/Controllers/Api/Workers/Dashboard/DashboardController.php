@@ -46,9 +46,9 @@ class DashboardController extends Controller
                 ->whereNotNull('confirmed_at')
                 ->whereNull('declined_at')
                 ->whereNotNull('cancelled_at')
-                ->whereHas('jobShift', function ($query) {
+                /*->whereHas('jobShift', function ($query) {
                     $query->whereNotNull('cancelled_at');
-                })
+                })*/
                 ->where(function ($query) {
                     $query->whereDate('shift_date', '>=', Carbon::now()->format('Y-m-d'))
                         ->orWhere(function ($query) {

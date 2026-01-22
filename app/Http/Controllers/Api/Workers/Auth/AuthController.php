@@ -48,7 +48,7 @@ class AuthController extends Controller
         $worker->token = $token;
         $worker->save();
 
-        $country = Country::query()->where('nationality', $worker->nationality)->first();
+        $country = Country::query()->where('id', $worker->nationality)->first();
         return self::responseWithSuccess('You are successfully logged in.', [
             'token' => $token,
             'worker_no' => $worker->worker_no,

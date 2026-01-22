@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Payroll;
 use App\Exports\NewStarterExport;
 use App\Http\Controllers\Controller;
 use App\Models\Group\CostCentre;
+use App\Models\Job\JobShiftWorker;
 use App\Models\Timesheet\Timesheet;
 use App\My_response\Traits\Response\JsonResponse;
 use Carbon\Carbon;
@@ -22,45 +23,50 @@ class NewStartersController extends Controller
     }
 
     public function newStartersAction(Request $request) {
-        try {
-            $validator = Validator::make($request->all(), [
-                'start_date' => 'required|date',
-                'end_date'   => 'required|date|after:start_date',
-            ]);
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after:start_date',
+        ]);
 
-            if ($validator->fails()) {
-                return self::validationError($validator->errors()->messages());
-            }
+        $costCenter = $request->input('cost_center') ?? 'Any';
+        $startDate = Carbon::parse($validated['start_date'])->format('Y-m-d');
+        $endDate = Carbon::parse($validated['end_date'])->format('Y-m-d');
 
-            $costCenter = $request->input('cost_center') ?? 'Any';
-            $startDate = Carbon::parse($request->input('start_date'))->format('Y-m-d');
-            $endDate = Carbon::parse($request->input('end_date'))->format('Y-m-d');
-
-            $workers = Timesheet::query()
-                ->select( 'worker_id', DB::raw('MIN(date) as first_working_date'))
-                ->when($costCenter != 'Any', function ($query) use ($costCenter) {
-                    $query->whereHas('worker_all_details.worker_cost_centres_with_name', function ($subQuery) use ($costCenter) {
-                        $subQuery->where('cost_center_id', $costCenter);
-                    });
-                })
-                ->groupBy('worker_id')
-                ->havingBetween('first_working_date', [$startDate, $endDate])
-                ->with('worker_all_details')
-                ->get()
-                ->map(function($item) {
-                    return [
-                        'worker_id' => $item->worker_id,
-                        'first_working_date' => $item->first_working_date,
-                        'worker_details' => $item->worker_all_details,
-                    ];
+        $workers = JobShiftWorker::query()
+            ->select( 'worker_id')
+            ->whereNotNull('confirmed_at')
+            ->whereNull('declined_at')
+            ->whereNull('cancelled_at')
+            ->whereBetween('shift_date', [$startDate, $endDate])
+            ->when($costCenter != 'Any', function ($query) use ($costCenter) {
+                $query->whereHas('worker_all_details.worker_cost_centres_with_name', function ($subQuery) use ($costCenter) {
+                    $subQuery->where('cost_center', $costCenter);
                 });
+            })
+            ->whereDoesntHave('worker_all_details.worker_payroll_references', function ($query) {
+                $query->whereNull('expires_on');
+            })
+            ->groupBy('worker_id')
+            ->with([
+                'worker_all_details',
+                'worker_all_details.worker_cost_center'
+            ])
+            ->get()
+            ->map(function($item) {
+                return [
+                    'worker_id' => $item->worker_id,
+                    'first_working_date' => JobShiftWorker::query()->where('worker_id', $item->worker_id)
+                        ->whereNotNull('confirmed_at')
+                        ->whereNull('declined_at')
+                        ->whereNull('cancelled_at')
+                        ->orderBy('shift_date', 'asc')->pluck('shift_date')->first(),
+                    'worker_all_details' => $item->worker_all_details,
+                ];
+            });
 
-            return self::responseWithSuccess('New starter export.', [
-                'fileName' => 'new_starters_report_' . now()->format('dmY_Hi') . '.csv',
-                'csv' => Excel::raw(new NewStarterExport($workers), \Maatwebsite\Excel\Excel::CSV)
-            ]);
-        } catch (\Exception $e) {
-            return self::responseWithError($e->getMessage());
-        }
+        return Excel::download(
+            new NewStarterExport($workers),
+            'new_starters_report_' . now()->format('dmY_Hi') . '.xls'
+        );
     }
 }

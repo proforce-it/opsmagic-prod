@@ -157,9 +157,9 @@
                         <label class="fs-6 required">Marital status</label>
                         <select name="marital_status" id="marital_status" class="form-select form-select-lg" data-control="select2" data-allow-clear="true" data-placeholder="Select...">
                             <option></option>
-                            <option value="Married">Married</option>
                             <option value="Single">Single</option>
-                            <option value="Co-habiting">Co-habiting</option>
+                            <option value="Married">Married</option>
+<!--                            <option value="Co-habiting">Co-habiting</option>-->
                         </select>
                         <span class="error text-danger" id="marital_status_error"></span>
                     </div>
@@ -171,7 +171,7 @@
                             <option></option>
                             @if($nationality)
                                 @foreach($nationality as $nRow)
-                                    <option value="{{ $nRow['nationality'] }}">{{ $nRow['nationality'] }}</option>
+                                    <option value="{{ $nRow['id'] }}">{{ $nRow['nationality'] }}</option>
                                 @endforeach
                             @endif
                         </select>

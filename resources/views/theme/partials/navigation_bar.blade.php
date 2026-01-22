@@ -91,16 +91,20 @@
                         <span class="menu-title text-white">Associates</span>
                     </a>
                 </div>
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('groups') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                              <i class="text-white fs-2 las la-users"></i>
+
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('groups') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                  <i class="text-white fs-2 las la-users"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Associate groups</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Associate groups</span>
+                        </a>
+                    </div>
+                @endif
+
                 <div class="menu-item">
                     <a class="menu-link" href="{{ url('worker-search') }}">
                         <span class="menu-icon">
@@ -112,16 +116,18 @@
                     </a>
                 </div>
 
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('worker-uploader') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                              <i class="text-white fs-2 las la-cloud-upload-alt"></i>
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('worker-uploader') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                  <i class="text-white fs-2 las la-cloud-upload-alt"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Associates uploader</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Associates uploader</span>
+                        </a>
+                    </div>
+                @endif
 
                 <div class="menu-item">
                     <div class="menu-content pt-8">
@@ -138,16 +144,20 @@
                         <span class="menu-title text-white">Jobs</span>
                     </a>
                 </div>
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('job-shift-uploader') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                                <i class="fs-2 las la-cloud-upload-alt"></i>
+
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('job-shift-uploader') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                    <i class="fs-2 las la-cloud-upload-alt"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Bookings uploader</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Bookings uploader</span>
+                        </a>
+                    </div>
+                @endif
+
                 <div class="menu-item">
                     <a class="menu-link" href="{{ url('assignment-management') }}">
                         <span class="menu-icon">
@@ -174,26 +184,29 @@
                         <span class="menu-section text-white text-uppercase fs-8 ls-1">Timesheets & payroll</span>
                     </div>
                 </div>
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('timesheet-uploader') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                                <i class="fs-2 las la-clock"></i>
+
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('timesheet-uploader') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                    <i class="fs-2 las la-clock"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Timesheet uploader</span>
-                    </a>
-                </div>
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('bonus-uploader') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                                <i class="fs-2 las la-coins"></i>
+                            <span class="menu-title text-white">Timesheet uploader</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('bonus-uploader') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                    <i class="fs-2 las la-coins"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Bonus uploader</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Bonus uploader</span>
+                        </a>
+                    </div>
+                @endif
                 <div class="menu-item">
                     <a class="menu-link" href="{{ url('timesheet-and-bonus-editor') }}">
                         <span class="menu-icon">
@@ -245,7 +258,7 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a class="menu-link" href="javascript:;">
+                    <a class="menu-link" href="{{ url('payroll-reference-uploader') }}">
                         <span class="menu-icon">
                             <span class="svg-icon svg-icon-2">
                                 <i class="fs-2 las la-list-alt"></i>
@@ -255,60 +268,63 @@
                     </a>
                 </div>
 
-                <div class="menu-item">
-                    <div class="menu-content pt-8">
-                        <span class="menu-section text-white text-uppercase fs-8 ls-1">pending requests</span>
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <div class="menu-content pt-8">
+                            <span class="menu-section text-white text-uppercase fs-8 ls-1">pending requests</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('holiday-request') }}">
-                            <span class="menu-icon">
-                                <span class="svg-icon svg-icon-2">
-                                    <i class="fs-2 las la-clipboard-list"></i>
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('holiday-request') }}">
+                                <span class="menu-icon">
+                                    <span class="svg-icon svg-icon-2">
+                                        <i class="fs-2 las la-clipboard-list"></i>
+                                    </span>
                                 </span>
-                            </span>
-                        <span class="menu-title text-white">Holiday requests</span>
-                    </a>
-                </div>
-
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('address-request') }}">
-                            <span class="menu-icon">
-                                <span class="svg-icon svg-icon-2">
-                                    <i class="fs-2 las la-map-pin"></i>
-                                </span>
-                            </span>
-                        <span class="menu-title text-white">Addresses requests</span>
-                    </a>
-                </div>
-
-                <div class="menu-item">
-                    <div class="menu-content pt-8">
-                        <span class="menu-section text-white text-uppercase fs-8 ls-1">Management & Settings</span>
+                            <span class="menu-title text-white">Holiday requests</span>
+                        </a>
                     </div>
-                </div>
 
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('accommodation-list') }}">
-                            <span class="menu-icon">
-                                <span class="svg-icon svg-icon-2">
-                                    <i class="fs-2 las la-home"></i>
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('address-request') }}">
+                                <span class="menu-icon">
+                                    <span class="svg-icon svg-icon-2">
+                                        <i class="fs-2 las la-map-pin"></i>
+                                    </span>
                                 </span>
-                            </span>
-                        <span class="menu-title text-white">Accommodation sites</span>
-                    </a>
-                </div>
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('pick-up-point-list') }}">
-                            <span class="menu-icon">
-                                <span class="svg-icon svg-icon-2">
-                                    <i class="fs-2 las la-car-alt"></i>
+                            <span class="menu-title text-white">Addresses requests</span>
+                        </a>
+                    </div>
+
+                    <div class="menu-item">
+                        <div class="menu-content pt-8">
+                            <span class="menu-section text-white text-uppercase fs-8 ls-1">Management & Settings</span>
+                        </div>
+                    </div>
+
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('accommodation-list') }}">
+                                <span class="menu-icon">
+                                    <span class="svg-icon svg-icon-2">
+                                        <i class="fs-2 las la-home"></i>
+                                    </span>
                                 </span>
-                            </span>
-                        <span class="menu-title text-white">Pick-up points</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Accommodation sites</span>
+                        </a>
+                    </div>
+
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('pick-up-point-list') }}">
+                                <span class="menu-icon">
+                                    <span class="svg-icon svg-icon-2">
+                                        <i class="fs-2 las la-car-alt"></i>
+                                    </span>
+                                </span>
+                            <span class="menu-title text-white">Pick-up points</span>
+                        </a>
+                    </div>
+                @endif
 
                 @if(\Illuminate\Support\Facades\Auth::user()['user_type'] == 'Admin')
                     <div class="menu-item">
@@ -322,27 +338,30 @@
                         </a>
                     </div>
                 @endif
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('teams-management') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                                <i class="fs-2 las la-user-friends"></i>
-                            </span>
-                        </span>
-                        <span class="menu-title text-white">Teams</span>
-                    </a>
-                </div>
 
-                <div class="menu-item">
-                    <a class="menu-link" href="{{ url('cost-centres-management') }}">
-                        <span class="menu-icon">
-                            <span class="svg-icon svg-icon-2">
-                                <i class="fs-2 las la-map-marker"></i>
+                @if(in_array(\Illuminate\Support\Facades\Auth::user()['user_type'], ['Admin', 'Standard']))
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('teams-management') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                    <i class="fs-2 las la-user-friends"></i>
+                                </span>
                             </span>
-                        </span>
-                        <span class="menu-title text-white">Cost centres</span>
-                    </a>
-                </div>
+                            <span class="menu-title text-white">Teams</span>
+                        </a>
+                    </div>
+
+                    <div class="menu-item">
+                        <a class="menu-link" href="{{ url('cost-centres-management') }}">
+                            <span class="menu-icon">
+                                <span class="svg-icon svg-icon-2">
+                                    <i class="fs-2 las la-map-marker"></i>
+                                </span>
+                            </span>
+                            <span class="menu-title text-white">Cost centres</span>
+                        </a>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

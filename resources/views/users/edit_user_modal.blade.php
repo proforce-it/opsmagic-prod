@@ -52,8 +52,9 @@
                                         <label class="text-muted fs-6 fw-bold required">User type</label>
                                         <select name="edit_user_type" id="edit_user_type" class="form-select form-select-lg" data-control="select2" data-placeholder="Select..." data-allow-clear="true">
                                             <option></option>
-                                            <option value="Standard">Standard</option>
                                             <option value="Admin">Admin</option>
+                                            <option value="Payroll">Payroll</option>
+                                            <option value="Standard">Standard</option>
                                         </select>
                                         <span class="error text-danger" id="edit_user_type_error"></span>
                                     </div>

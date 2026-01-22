@@ -145,7 +145,7 @@
 @section('js')
     <script>
         $("#download_sample_file").on('click', function (){
-            window.location.href="{{ asset('workers/sample_file/workers.csv') }}"
+            window.location.href="{{ asset('workers/sample_file/associate_upload.csv') }}"
         });
 
         let data = '';
