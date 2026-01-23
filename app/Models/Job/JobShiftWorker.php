@@ -31,6 +31,6 @@ class JobShiftWorker extends Model
 
     public function worker_all_details() {
         return $this->hasOne(Worker::class, 'id', 'worker_id')
-            ->with(['worker_cost_centres_with_name', 'worker_cost_center', 'latest_end_date_rights_to_work_details', 'id_documents', 'nationality_details', 'worker_payroll_references']);
+            ->with(['worker_cost_centres_with_name', 'worker_cost_center', 'latest_end_date_rights_to_work_details', 'id_documents', 'nationality_details', 'worker_payroll_references', 'accommodation_details']);
     }
 }

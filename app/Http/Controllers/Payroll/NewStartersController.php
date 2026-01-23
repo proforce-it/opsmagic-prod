@@ -6,12 +6,9 @@ use App\Exports\NewStarterExport;
 use App\Http\Controllers\Controller;
 use App\Models\Group\CostCentre;
 use App\Models\Job\JobShiftWorker;
-use App\Models\Timesheet\Timesheet;
 use App\My_response\Traits\Response\JsonResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 
 class NewStartersController extends Controller

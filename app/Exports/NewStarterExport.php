@@ -72,6 +72,32 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
                 : $rtw['reference_number'];
         }
 
+        $addressLine1 = '';
+        $addressLine2 = '';
+        $city = '';
+        $postcode = '';
+        $state = '';
+
+        if (($details['accommodation_type'] ?? null) === 'arranged_by_worker') {
+
+            $addressLine1 = $details['current_address_line_one'] ?? '';
+            $addressLine2 = $details['current_address_line_two'] ?? '';
+            $city         = $details['current_city'] ?? '';
+            $postcode     = $details['current_post_code'] ?? '';
+            $state        = $details['current_state'] ?? '';
+
+        } elseif (($details['accommodation_type'] ?? null) === 'supplied_by_pro_force') {
+
+            $accommodation = $details['accommodation_details'] ?? null;
+
+            if ($accommodation) {
+                $addressLine1 = $accommodation['address_line_one'] ?? '';
+                $addressLine2 = $accommodation['address_line_two'] ?? '';
+                $city         = $accommodation['city'] ?? '';
+                $postcode     = $accommodation['postcode'] ?? '';
+            }
+        }
+
         return [
             $details['worker_no'] ?? '',
             $details['title'] ?? '',
@@ -104,11 +130,11 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
             $details['latest_end_date_rights_to_work_details']['right_to_work_type'] ?? '',
             $rtwNumber,
             $details['latest_end_date_rights_to_work_details']['end_date'] ?? '2199-12-31',
-            $details['current_address_line_one'] ?? '',
-            $details['current_address_line_two'] ?? '',
-            $details['current_city'] ?? '',
-            $details['current_state'] ?? '',
-            $details['current_post_code'] ?? '',
+            $addressLine1,
+            $addressLine2,
+            $city,
+            $state,
+            $postcode,
             $details['next_of_kin_first_name'] ?? '',
             $details['next_of_kin_last_name'] ?? '',
             $details['next_of_kin_relationship'] ?? '',

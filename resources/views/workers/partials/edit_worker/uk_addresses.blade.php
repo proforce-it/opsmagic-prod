@@ -203,32 +203,19 @@
                 <div class="row">
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label for="next_of_kin_first_name" class="fs-6 required">Name</label>
+                            <label for="next_of_kin_first_name" class="fs-6 required">First Name</label>
                             <input type="text" name="next_of_kin_first_name" id="next_of_kin_first_name" class="form-control" value="{{ $worker['next_of_kin_first_name'] }}" />
                             <span class="error text-danger" id="next_of_kin_first_name_error"></span>
                         </div>
                     </div>
-<!--                    <div class="col-lg-6">
+                    <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label for="next_of_kin_last_name" class="fs-6 required">Surname</label>
+                            <label for="next_of_kin_last_name" class="fs-6 required">Last Name</label>
                             <input type="text" name="next_of_kin_last_name" id="next_of_kin_last_name" class="form-control" value="{{ $worker['next_of_kin_last_name'] }}" />
                             <span class="error text-danger" id="next_of_kin_last_name_error"></span>
                         </div>
-                    </div>-->
-                    <div class="col-lg-6">
-                        <div class="mb-10 fv-row fv-plugins-icon-container">
-                            <label for="next_of_kin_relationship" class="fs-6">Relationship</label>
-                            <select name="next_of_kin_relationship" id="next_of_kin_relationship" class="form-select form-select-lg" data-control="select2" data-placeholder="Select..." data-allow-clear="true">
-                                <option {{ ($worker['next_of_kin_relationship'] == "") ? 'selected' : '' }} value=""></option>
-                                <option {{ ($worker['next_of_kin_relationship'] == "Mother/Father") ? 'selected' : '' }} value="Mother/Father">Mother/Father</option>
-                                <option {{ ($worker['next_of_kin_relationship'] == "Brother/Sister") ? 'selected' : '' }} value="Brother/Sister">Brother/Sister</option>
-                                <option {{ ($worker['next_of_kin_relationship'] == "Wife/Husband/Spouse") ? 'selected' : '' }} value="Wife/Husband/Spouse">Wife/Husband/Spouse</option>
-                                <option {{ ($worker['next_of_kin_relationship'] == "Friend") ? 'selected' : '' }} value="Friend">Friend</option>
-                                <option {{ ($worker['next_of_kin_relationship'] == "Other") ? 'selected' : '' }} value="Other">Other</option>
-                            </select>
-                            <span class="error text-danger" id="next_of_kin_relationship_error"></span>
-                        </div>
                     </div>
+
                     <div class="col-lg-6">
                         <div class="mb-10 fv-row fv-plugins-icon-container">
                             <label for="next_of_kin_mobile" class="fs-6 required">Mobile</label>
@@ -255,6 +242,20 @@
                                 <input type="text" name="next_of_kin_email" id="next_of_kin_email" class="form-control" value="{{ $worker['next_of_kin_email'] }}" />
                             </div>
                             <span class="error text-danger" id="next_of_kin_email_error"></span>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="mb-10 fv-row fv-plugins-icon-container">
+                            <label for="next_of_kin_relationship" class="fs-6">Relationship</label>
+                            <select name="next_of_kin_relationship" id="next_of_kin_relationship" class="form-select form-select-lg" data-control="select2" data-placeholder="Select..." data-allow-clear="true">
+                                <option {{ ($worker['next_of_kin_relationship'] == "") ? 'selected' : '' }} value=""></option>
+                                <option {{ ($worker['next_of_kin_relationship'] == "Mother/Father") ? 'selected' : '' }} value="Mother/Father">Mother/Father</option>
+                                <option {{ ($worker['next_of_kin_relationship'] == "Brother/Sister") ? 'selected' : '' }} value="Brother/Sister">Brother/Sister</option>
+                                <option {{ ($worker['next_of_kin_relationship'] == "Wife/Husband/Spouse") ? 'selected' : '' }} value="Wife/Husband/Spouse">Wife/Husband/Spouse</option>
+                                <option {{ ($worker['next_of_kin_relationship'] == "Friend") ? 'selected' : '' }} value="Friend">Friend</option>
+                                <option {{ ($worker['next_of_kin_relationship'] == "Other") ? 'selected' : '' }} value="Other">Other</option>
+                            </select>
+                            <span class="error text-danger" id="next_of_kin_relationship_error"></span>
                         </div>
                     </div>
                 </div>

@@ -1109,6 +1109,8 @@ class WorkerController extends Controller
                 'permanent_country' => 'required_without:same_as_current_address',
 
                 'next_of_kin_first_name' => 'required',
+                'next_of_kin_last_name' => 'required',
+
                 'next_of_kin_mobile' => 'required_without:next_of_kin_email',
                 'next_of_kin_email' => 'required_without:next_of_kin_mobile|nullable|email',
             ], [
@@ -1127,7 +1129,9 @@ class WorkerController extends Controller
                 'permanent_city.required_without' => 'City is required when "Same as UK address" is not checked.',
                 'permanent_country.required_without' => 'Country is required when "Same as UK address" is not checked.',
 
-                'next_of_kin_first_name' => 'The name field is required.',
+                'next_of_kin_first_name' => 'The first name field is required.',
+                'next_of_kin_last_name' => 'The last name field is required.',
+
                 'next_of_kin_mobile.required_without' => 'The mobile field is required when email is not present.',
                 'next_of_kin_email.email' => 'The email must be a valid email address.',
                 'next_of_kin_email.required_without' => 'The email field is required when mobile is not present.',
@@ -1138,7 +1142,7 @@ class WorkerController extends Controller
 
             $params = $request->input();
 
-            $fields = ['accommodation_type', 'accommodation_site', 'current_address_line_one', 'current_address_line_two', 'current_post_code', 'current_city', 'current_state', 'current_country', 'proforce_transport', 'preferred_pick_up_point_id', 'permanent_address_line_one', 'permanent_address_line_two', 'permanent_country', 'permanent_state', 'permanent_city', 'permanent_post_code', 'next_of_kin_first_name', 'next_of_kin_email', 'next_of_kin_mobile'];
+            $fields = ['accommodation_type', 'accommodation_site', 'current_address_line_one', 'current_address_line_two', 'current_post_code', 'current_city', 'current_state', 'current_country', 'proforce_transport', 'preferred_pick_up_point_id', 'permanent_address_line_one', 'permanent_address_line_two', 'permanent_country', 'permanent_state', 'permanent_city', 'permanent_post_code', 'next_of_kin_first_name', 'next_of_kin_last_name', 'next_of_kin_email', 'next_of_kin_mobile'];
             ActivityLogs::updatesLog(
                 $params['update_uk_addresses_id'],
                 'Worker update',
@@ -1160,6 +1164,7 @@ class WorkerController extends Controller
                 'permanent_post_code' => $params['permanent_post_code'],
 
                 'next_of_kin_first_name' => $params['next_of_kin_first_name'],
+                'next_of_kin_last_name' => $params['next_of_kin_last_name'],
                 'next_of_kin_email' => $params['next_of_kin_email'],
                 'next_of_kin_mobile' => $params['next_of_kin_mobile'],
                 'next_of_kin_relationship' => $params['next_of_kin_relationship'],
