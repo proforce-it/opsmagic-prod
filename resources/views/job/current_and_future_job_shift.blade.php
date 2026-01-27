@@ -185,6 +185,13 @@
                                                                     <div class="d-flex align-items-center">
                                                                         <a href="{{ url('view-worker-details/'.$cow['worker_id']) }}" class="text-dark fw-bolder text-hover-primary d-block fs-6 me-2" target="_blank">{{ $cow['worker']['first_name'].' '.$cow['worker']['middle_name'].' '.$cow['worker']['last_name'] }} </a>
                                                                         <span class="fs-7 text-muted fw-bold"><span class="fw-boldest text-muted">b.</span>{{\Illuminate\Support\Carbon::parse($cow['worker']['date_of_birth'])->format('d/m/y')}}</span>
+                                                                        <span class="ms-1 fs-7 text-muted fw-bold">
+                                                                            @if($cow['worker']['worker_type'] == 'heavy')
+                                                                                <i class="las la-weight-hanging fs-5 me-1 ms-2"></i>
+                                                                            @elseif($cow['worker']['worker_type'] == 'light')
+                                                                                <i class="las la-feather-alt fs-5 me-1 ms-2"></i>
+                                                                            @endif
+                                                                        </span>
                                                                     </div>
                                                                 @endif
                                                                 <span class="text-muted fw-bold d-flex fs-7 align-items-center">
@@ -270,6 +277,13 @@
                                                                     <div class="d-flex align-items-center">
                                                                     <a href="{{ url('view-worker-details/'.$pw['worker_id']) }}" class="text-dark fw-bolder text-hover-primary d-block fs-6 me-2" target="_blank">{{ $pw['worker']['first_name'].' '.$pw['worker']['middle_name'].' '.$pw['worker']['last_name'] }}</a>
                                                                         <span class="fs-7 text-muted fw-bold"><span class="fw-boldest text-muted">b.</span>{{\Illuminate\Support\Carbon::parse($pw['worker']['date_of_birth'])->format('d/m/y')}}</span>
+                                                                        <span class="ms-1 fs-7 text-muted fw-bold">
+                                                                            @if($pw['worker']['worker_type'] == 'heavy')
+                                                                                <i class="las la-weight-hanging fs-5 me-1 ms-2"></i>
+                                                                            @elseif($pw['worker']['worker_type'] == 'light')
+                                                                                <i class="las la-feather-alt fs-5 me-1 ms-2"></i>
+                                                                            @endif
+                                                                        </span>
                                                                     </div>
                                                                 @endif
                                                                 <span class="text-muted fw-bold d-flex fs-7 align-items-center">
@@ -662,6 +676,13 @@
                                                                             @endif--}}
                                                                         </a>
                                                                         <span class="fs-7 text-muted fw-bold"><span class="fw-boldest text-muted">b.</span>{{\Illuminate\Support\Carbon::parse($avw['worker']['date_of_birth'])->format('d/m/y')}}</span>
+                                                                        <span class="ms-1 fs-7 text-muted fw-bold">
+                                                                            @if($avw['worker']['worker_type'] == 'heavy')
+                                                                                <i class="las la-weight-hanging fs-5 me-1 ms-2"></i>
+                                                                            @elseif($avw['worker']['worker_type'] == 'light')
+                                                                                <i class="las la-feather-alt fs-5 me-1 ms-2"></i>
+                                                                            @endif
+                                                                        </span>
                                                                     </div>
                                                                 @endif
                                                                 <span class="text-muted fw-bold text-muted d-flex fs-7 align-items-center">

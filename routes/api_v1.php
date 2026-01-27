@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Controllers\Api\Workers\Auth\AuthController;
-use App\Http\Controllers\Api\Workers\Auth\GeneratePasswordController;
-use App\Http\Controllers\Api\Workers\Dashboard\DashboardController;
-use App\Http\Controllers\Api\Workers\Profile\AbsenceController;
-use App\Http\Controllers\Api\Workers\Profile\ProfileController;
-use App\Http\Controllers\Api\Workers\RTWs\RTWsController;
-use App\Http\Controllers\Api\Workers\Shift\ShiftController;
-use App\Http\Controllers\Api\Workers\Timesheet\TimesheetController;
+use App\Http\Controllers\Api\V1\Workers\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Workers\Auth\GeneratePasswordController;
+use App\Http\Controllers\Api\V1\Workers\Dashboard\DashboardController;
+use App\Http\Controllers\Api\V1\Workers\Profile\AbsenceController;
+use App\Http\Controllers\Api\V1\Workers\Profile\ProfileController;
+use App\Http\Controllers\Api\V1\Workers\RTWs\RTWsController;
+use App\Http\Controllers\Api\V1\Workers\Shift\ShiftController;
+use App\Http\Controllers\Api\V1\Workers\Timesheet\TimesheetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -55,5 +55,3 @@ Route::middleware(['auth:api', 'validate.token'])->group(function () {
     Route::get('get-my-holiday-request', [AbsenceController::class, 'getMyHolidayRequest']);
     Route::post('declined-my-request', [AbsenceController::class, 'declinedHolidayRequest']);
 });
-
-Route::prefix('v1')->group(base_path('routes/api_v1.php'));

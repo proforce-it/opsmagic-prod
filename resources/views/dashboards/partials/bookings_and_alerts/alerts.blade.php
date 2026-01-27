@@ -84,6 +84,17 @@
                     </div>
                 </td>
             </tr>
+            <tr class="border-top-3 border-gray-400" id="workers_worked_greater_than_48_hours_in_week_border">
+                <td class="text-gray-400 workers_worked_greater_than_48_hours_in_week_border_class">
+                    WORKED >48 HOURS IN A WEEK. <br>
+                    <div>
+                        <a href="{{ url('worker-management?filter=workers-have-worked-greater-than-48-hours-in-week') }}" id="workers_worked_greater_than_48_hours_in_week_view_btn" class="url_modified">
+                            <span class="fw-bolder fs-xxl-1 text-gray-400 workers_worked_greater_than_48_hours_in_week" id="workers_worked_greater_than_48_hours_in_week">0</span>
+                            <i class="fs-xxl-1 las la-fire-alt float-end text-gray-400 workers_worked_greater_than_48_hours_in_week"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
             </tbody>
         </table>
     </div>

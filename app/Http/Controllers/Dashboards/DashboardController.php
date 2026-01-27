@@ -51,9 +51,6 @@ class DashboardController extends Controller
     private function alert($cost_center) {
         $startDate = Carbon::today()->toDateString();
 
-        //Shifts with spaces in tomorrow
-        //$shiftSpaceTomorrow = Carbon::today()->addDay(1)->toDateString();
-
         $after1Hour = Carbon::now()->addHour();
         $in36Hours = Carbon::now()->addHours(36);
 
@@ -210,6 +207,30 @@ class DashboardController extends Controller
                 return false;
             });
 
+        $workersWorkedGreaterThan48Hours = Timesheet::query()
+            ->when($cost_center != '', function ($query) use ($cost_center) {
+                $query->whereHas('worker_details.worker_cost_center', function ($subQuery) use ($cost_center) {
+                    $subQuery->where('cost_center', $cost_center);
+                });
+            })
+            ->whereHas('worker_details', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('48_hour_opt_out', 'No')
+                        ->orWhereNull('48_hour_opt_out');
+                });
+            })
+            ->whereBetween('date', [
+                Carbon::now()->subDays(7)->startOfDay(),
+                Carbon::now()->endOfDay()
+            ])
+            ->with('worker_details')
+            ->get()
+            ->groupBy('worker_id')
+            ->filter(function ($timesheets) {
+                $totalHours = $timesheets->sum('hours_worked');
+                return $totalHours > 48;
+            });
+
         return [
             'shift_with_space_tomorrow' => $shiftWithSpaceTomorrow,
             'shift_with_space' => $shiftWithSpace,
@@ -218,6 +239,7 @@ class DashboardController extends Controller
             'shift_workers_without_payroll' => $shiftWorkersWithoutPayroll,
             'workers_worked_greater_than_12_days' => $workersWorkedGreaterThan12Days->count(),
             'workers_worked_greater_than_12_days_2' => $workersWorkedGreaterThan12Days2->count(),
+            'workers_worked_greater_than_48_hours_in_week' => $workersWorkedGreaterThan48Hours->count(),
         ];
     }
 
@@ -942,36 +964,6 @@ class DashboardController extends Controller
         try {
             $cost_center = $request->input('cost_center');
             $payroll_week = $request->input('payroll_week');
-
-            /*$workersWorkedGreaterThan12Days = Timesheet::query()
-                ->get()
-                ->groupBy('worker_id')
-                ->filter(function ($timesheets) {
-
-                    $dates = $timesheets
-                        ->sortBy('date')
-                        ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
-                        ->unique()
-                        ->values();
-
-                    $streak = 1;
-
-                    for ($i = 0; $i < $dates->count() - 1; $i++) {
-                        if (Carbon::parse($dates[$i])->addDay()->eq(Carbon::parse($dates[$i + 1]))) {
-                            $streak++;
-
-                            if ($streak >= 12) {
-                                return true;
-                            }
-                        } else {
-                            $streak = 1;
-                        }
-                    }
-
-                    return false;
-                });
-
-            return $workersWorkedGreaterThan12Days->count();*/
 
             $returnArray = [
                 'alert_section' => $this->alert($cost_center),

@@ -14,7 +14,7 @@ class JobShiftWorker extends Model
     protected $guarded = [];
 
     public function worker() {
-        return $this->belongsTo(Worker::class)->select(['id', 'worker_no', 'first_name', 'middle_name', 'last_name', 'payroll_reference', 'email_address', 'mobile_number', 'date_of_birth']);
+        return $this->belongsTo(Worker::class)->select(['id', 'worker_no', 'first_name', 'middle_name', 'last_name', 'payroll_reference', 'email_address', 'mobile_number', 'date_of_birth', 'worker_type']);
     }
 
     public function rightsToWork() {

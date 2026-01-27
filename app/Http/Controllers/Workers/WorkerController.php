@@ -164,7 +164,7 @@ class WorkerController extends Controller
                     ->filter(function ($timesheets) {
                         $dates = $timesheets
                             ->sortBy('date')
-                            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+                            ->map(fn($row) => Carbon::parse($row->date)->toDateString())
                             ->unique()
                             ->values();
 
@@ -184,13 +184,47 @@ class WorkerController extends Controller
                     ->keys()
                     ->all();
 
-                    $workers = Worker::query()->whereIn('id', array_unique($workersWorkedGreaterThan12Days_2))
-                        ->when(request('status') != null && request('status') != 'All', function ($q) {
-                            return $q->where('status', request('status'));
-                        })
-                        ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
-                        ->get()
-                        ->toArray();
+                $workers = Worker::query()->whereIn('id', array_unique($workersWorkedGreaterThan12Days_2))
+                    ->when(request('status') != null && request('status') != 'All', function ($q) {
+                        return $q->where('status', request('status'));
+                    })
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
+                    ->get()
+                    ->toArray();
+            } else if ($filter == 'workers-have-worked-greater-than-48-hours-in-week') {
+                $workersWorkedGreaterThan48Hours = Timesheet::query()
+                    ->when($cost_center != '', function ($query) use ($cost_center) {
+                        $query->whereHas('worker_details.worker_cost_center', function ($subQuery) use ($cost_center) {
+                            $subQuery->where('cost_center', $cost_center);
+                        });
+                    })
+                    ->whereHas('worker_details', function ($query) {
+                        $query->where(function ($q) {
+                            $q->where('48_hour_opt_out', 'No')
+                                ->orWhereNull('48_hour_opt_out');
+                        });
+                    })
+                    ->whereBetween('date', [
+                        Carbon::now()->subDays(7)->startOfDay(),
+                        Carbon::now()->endOfDay()
+                    ])
+                    ->with('worker_details')
+                    ->get()
+                    ->groupBy('worker_id')
+                    ->filter(function ($timesheets) {
+                        $totalHours = $timesheets->sum('hours_worked');
+                        return $totalHours > 48;
+                    })
+                    ->keys()
+                    ->all();
+
+                $workers = Worker::query()->whereIn('id', array_unique($workersWorkedGreaterThan48Hours))
+                    ->when(request('status') != null && request('status') != 'All', function ($q) {
+                        return $q->where('status', request('status'));
+                    })
+                    ->with(['rights_to_work_details', 'incomplete_rights_to_work_details', 'id_documents', 'worker_documents', 'worker_payroll_references'])
+                    ->get()
+                    ->toArray();
             } else {
 
                 //List of all workers
@@ -404,7 +438,7 @@ class WorkerController extends Controller
 /*                'name_of_partner'           => $params['name_of_partner'],
               'id_number_of_partner'      => $params['id_number_of_partner'],*/
                 'gender'                    => $params['gender'],
-
+                'worker_type'               => $params['worker_type']
             ]);
             WorkerSequenceNumber::query()->create($request->all(['worker_number_year', 'worker_number_month', 'worker_number_sequence']));
 
@@ -658,7 +692,24 @@ class WorkerController extends Controller
             ->get();
 
         $costCentre = CostCentre::query()->orderBy('short_code')->get();
-        return view('workers.view_worker', compact('worker', 'nationality', 'country', 'client', 'allNotes', 'accommodation_site', 'pickup_point', 'group', 'costCentre'));
+
+        $assignedJobs = ClientJobWorker::query()->where('worker_id', $id)
+            ->whereNull('archived_at')
+            ->with('job')
+            ->get();
+
+        return view('workers.view_worker', compact([
+                'worker',
+                'nationality',
+                'country',
+                'client',
+                'allNotes',
+                'accommodation_site',
+                'pickup_point',
+                'group',
+                'costCentre',
+                'assignedJobs'
+            ]));
     }
 
     /*public function addNewSectionForWorkExperience(Request $request) {
@@ -943,7 +994,7 @@ class WorkerController extends Controller
             $costCenter = $params['cost_center'];
             $params['date_of_birth'] = date('Y-m-d', strtotime($params['date_of_birth']));
 
-            $fields = ['title', 'first_name', 'middle_name', 'last_name', 'worker_no', 'client_reference', 'national_insurance_number', 'mobile_number', 'email_address', 'date_of_birth', 'gender', 'marital_status', 'nationality'];
+            $fields = ['title', 'first_name', 'middle_name', 'last_name', 'worker_no', 'client_reference', 'national_insurance_number', 'mobile_number', 'email_address', 'date_of_birth', 'gender', 'marital_status', 'nationality','worker_type'];
             $workerData = Worker::query()->select($fields)
                 ->where('id', $params['update_id'])
                 ->first()
@@ -996,7 +1047,8 @@ class WorkerController extends Controller
                 'date_of_birth' => $params['date_of_birth'],
                 'gender' => $params['gender'],
                 'marital_status' => $params['marital_status'],
-                'nationality' => $params['nationality']
+                'nationality' => $params['nationality'],
+                'worker_type' => $params['worker_type']
             ]);
 
             if (!empty($costCenter)) {

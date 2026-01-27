@@ -21,16 +21,45 @@ class PendingRequestController extends Controller
 
     public function storeAbsenceRequest(Request $request) {
         try {
-            $getPendingRequest = WorkerPendingRequest::query()
+            $status = $request->input('status');
+
+            $query = WorkerPendingRequest::query()
                 ->where('type', 'absence')
                 ->with(['worker'])
-                ->orderBy('id', 'desc')
-                ->get();
+                ->orderBy('id', 'desc');
+
+            if ($status === 'Active') {
+                $query->whereNull('declined_by')
+                    ->whereNull('declined_id')
+                    ->whereNull('deleted_at');
+
+            } elseif ($status === 'Approved') {
+                $query->withTrashed()
+                    ->whereNull('declined_by')
+                    ->whereNull('declined_id')
+                    ->whereNotNull('deleted_at');
+
+            } elseif ($status === 'Rejected') {
+                $query->withTrashed()
+                    ->whereNotNull('declined_by')
+                    ->whereNotNull('declined_id')
+                    ->whereNotNull('deleted_at');
+
+            } elseif ($status === 'All') {
+                $query->withTrashed();
+            }
+
+            $getPendingRequest = $query->get();
 
             $array  = [];
             if ($getPendingRequest) {
                 foreach ($getPendingRequest as $row) {
                     $requestedData = json_decode($row['requested_data'], true);
+
+                    $isPending = is_null($row->declined_by)
+                        && is_null($row->declined_id)
+                        && is_null($row->deleted_at);
+
                     $array[] = [
                         'request_id' => $row['id'],
                         'worker_name'   => '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" target="_blank">'.$row['worker']['first_name'].' '.$row['worker']['middle_name'].' '.$row['worker']['last_name'].'</a>',
@@ -38,7 +67,7 @@ class PendingRequestController extends Controller
                         'end_date' => ($requestedData['end_date']) ? Carbon::parse($requestedData['end_date'])->format('d-m-Y') : '-',
                         'reason' => $requestedData['absence_type'],
                         'generated_at' => date('d-m-Y h:i:s', strtotime($row['created_at'])),
-                        'action' => $this->action($row['id']),
+                        'action' => $isPending ? $this->action($row->id) : '',
                     ];
                 }
             }

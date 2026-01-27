@@ -2349,8 +2349,14 @@ class ClientController extends Controller
 
                     $fullName = $row['worker']['first_name'] . ' ' . $row['worker']['middle_name'] . ' ' . $row['worker']['last_name'];
                     $dob = date('d/m/Y', strtotime($row['worker']['date_of_birth']));
+                    $icon = '';
 
-                    $preparedRow['worker_detail'] = '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" class="fw-bolder fs-6 p-2" target="_blank">' . $fullName . '</a><br><span class="fw-normal p-2">' . $dob . '</span>';
+                    if ($row['worker']['worker_type'] === 'light') {
+                        $icon = '<i class="las la-feather-alt fs-5"></i>';
+                    } elseif ($row['worker']['worker_type'] === 'heavy') {
+                        $icon = '<i class="las la-weight-hanging fs-5"></i>';
+                    }
+                    $preparedRow['worker_detail'] = '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" class="fw-bolder fs-6 p-2" target="_blank">' . $fullName . '</a><br><span class="fw-normal p-2">' . $dob . '</span><span>'.$icon.'</span>';
                     for ($i = 0; $i < 7; $i++) {
                         $shiftDate = $startDate->copy()->addDays((int) $i)->format('Y-m-d');
 

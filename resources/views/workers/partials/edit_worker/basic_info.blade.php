@@ -118,6 +118,16 @@
                             <span class="error text-danger" id="cost_center_error"></span>
                         </div>
                     </div>
+                    <div class="col-lg-6">
+                        <div class="mb-10 fv-row fv-plugins-icon-container">
+                            <label class="fs-6">Worker type</label>
+                            <select name="worker_type" id="worker_type" class="form-select form-select-lg" data-control="select2" data-allow-clear="true" data-placeholder="Select...">
+                                <option></option>
+                                <option {{ ($worker['worker_type']  == 'light') ? 'selected' : '' }} value="light">Light</option>
+                                <option {{ ($worker['worker_type']  == 'heavy') ? 'selected' : '' }}  value="heavy">Heavy</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row mb-5">
