@@ -16,7 +16,7 @@ class ClientJobWorker extends Model
 
     public function worker()
     {
-        return $this->belongsTo(Worker::class);
+        return $this->belongsTo(Worker::class)->with('nationality_details');
     }
 
     public function rightsToWork()

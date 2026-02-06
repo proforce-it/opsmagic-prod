@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Workers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\Workers\Auth\AuthController;
 use App\Http\Controllers\Api\Workers\Auth\GeneratePasswordController;
 use App\Http\Controllers\Api\Workers\Dashboard\DashboardController;

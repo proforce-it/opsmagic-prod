@@ -41,17 +41,24 @@ class JobController extends Controller
         $tagExplode = [0 => '', 1 => '', 2 => ''];
         $client     = Client::query()->orderBy('company_name')->get();
         $site       = [];
-        $job        = [];
+        $jobs        = [];
         $jobLineTextBox = '';
+        $current_shift_id = null;
+        $job = null;
 
         if ($tag) {
             $tagExplode = explode('.', $tag);
             $site       = Site::query()->where('client_id', $tagExplode[0])->orderBy('site_name')->get();
-            $job        = ClientJob::query()->where('site_id', $tagExplode[1])->orderBy('name')->get();
+            $jobs        = ClientJob::query()->where('site_id', $tagExplode[1])->orderBy('name')->get();
             $jobLineTextBox = JobHelper::preparedJobLineTextBox($tagExplode[2]);
         }
 
-        return view('job.dis_job_shift', compact('client', 'site', 'job', 'tagExplode', 'jobLineTextBox'));
+        if ($request->input('view_type') == 'month') {
+            $current_shift_id = JobHelper::get_shift_id($tagExplode[2]);
+            $job = ClientJob::query()->where('id', $tagExplode[2])->with(['client_details', 'site_details'])->first();
+        }
+
+        return view('job.dis_job_shift', compact('client', 'site', 'jobs', 'tagExplode', 'jobLineTextBox', 'current_shift_id', 'job'));
     }
 
     public function getSiteUsingClient(Request $request) {
@@ -541,6 +548,21 @@ class JobController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
+        $job = [
+            'id' => $shift['client_job_details']['id'],
+            'client_id' => $shift['client_job_details']['client_id'],
+            'site_id' => $shift['client_job_details']['site_id'],
+            'name' => $shift['client_job_details']['name'],
+            'archived' => $shift['client_job_details']['archived'],
+            'client_details' => [
+                'company_name' => $shift['client_job_details']['client_details']['company_name'],
+                'company_logo' => $shift['client_job_details']['client_details']['company_logo'],
+            ],
+            'site_details' => [
+                'site_name' => $shift['client_job_details']['site_details']['site_name']
+            ]
+        ];
+        $current_shift_id = JobHelper::get_shift_id($job['id']);
         return view('job.view_job_shift', compact('shift',
             'available_worker',
             'confirm_worker',
@@ -557,7 +579,9 @@ class JobController extends Controller
             'assignedGroups',
             'currentDuration',
             'group',
-            'pastDateConfirm_worker'
+            'pastDateConfirm_worker',
+            'job',
+            'current_shift_id'
         ));
     }
 

@@ -1,6 +1,11 @@
 @extends('theme.page')
-
-@section('title', 'Bookings calendar')
+@php
+    $view_type = \Illuminate\Support\Facades\Request::input('view_type');
+    $title = ($view_type == 'month')
+        ? 'Job - '.$job['name'].' (ID '.$job['id'].')'
+        : 'Bookings calendar';
+@endphp
+@section('title', $title)
 @section('content')
     <style>
         #calendar,
@@ -100,7 +105,11 @@
                 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
                     <div class="post d-flex flex-column-fluid" id="kt_post">
                         <div id="kt_content_container" class="container-xxl">
-                            <div class="card">
+                            @if($view_type == 'month')
+                                @include('job.job_detail_page_card')
+                            @endif
+
+                            <div class="card {{ ($view_type == 'month') ? 'd-none' : '' }}">
                                 <div class="card-body py-4">
                                     <div class="w-100">
                                         <div class="fv-row">
@@ -137,8 +146,8 @@
                                                         <label for="job" class="fs-6 fw-bold">Job</label>
                                                         <select name="job" id="job" class="form-select form-select-lg" data-control="select2" data-placeholder="Select a site first" data-allow-clear="true">
                                                             <option value=""></option>
-                                                            @if($job)
-                                                                @foreach ($job as $j_row)
+                                                            @if($jobs)
+                                                                @foreach ($jobs as $j_row)
                                                                     <option {{ ($tagExplode[2] == $j_row['id']) ? 'selected' : '' }} value="{{ $j_row['id'] }}">{{ $j_row['name'] }}</option>
                                                                 @endforeach
                                                             @endif
@@ -273,6 +282,35 @@
 @endsection
 
 @section('js')
+    @if($view_type == 'month')
+        <script>
+            $("#last_li_of_header_title").empty().append(`
+                <li class="breadcrumb-item text-muted">
+                    <a href="{{ url('client-management') }}" class="text-muted text-hover-primary text-uppercase" id="header_info_second_a_tag_title"> CLIENT MANAGEMENT </a>
+                </li>
+                <li class="breadcrumb-item text-gray-500"> > </li>
+                <li class="breadcrumb-item text-muted">
+                    <a href="{{ url('view-client-details/'.$job['client_id']) }}" class="text-muted text-hover-primary text-uppercase"> {{ $job['client_details']['company_name'] }} </a>
+                </li>
+            <li class="breadcrumb-item text-gray-500">></li>
+            <li class="breadcrumb-item text-dark">
+                <span id="header_sub_title">JOB</span>
+                <span id="header_additional_info" class="text-uppercase ms-1">
+                    : {{ $job['name'] }} (ID {{ $job['id'] }})
+                    </span>
+                </li>
+            `);
+
+            if (window.location.pathname === "/assignment-management") {
+                const menuLink = document.querySelector('.menu-link.active');
+                if (menuLink) {
+                    menuLink.classList.remove('active');
+                }
+            }
+
+            activeMenu('/job-management');
+        </script>
+    @endif
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script>
         $("#from_date").flatpickr({

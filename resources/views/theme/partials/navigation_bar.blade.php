@@ -169,13 +169,23 @@
                     </a>
                 </div>
                 <div class="menu-item">
-                    <a class="menu-link" href="{{ url('shift-overview') }}">
+                    <a class="menu-link" href="{{ url('booking-overview') }}">
                         <span class="menu-icon">
                             <span class="svg-icon svg-icon-2">
                                 <i class="fs-2 las la-calendar-week"></i>
                             </span>
                         </span>
                         <span class="menu-title text-white">Bookings overview (week view)</span>
+                    </a>
+                </div>
+                <div class="menu-item">
+                    <a class="menu-link" href="{{ url('shift-overview') }}">
+                        <span class="menu-icon">
+                            <span class="svg-icon svg-icon-2">
+                                <i class="fs-2 las la-calendar-week"></i>
+                            </span>
+                        </span>
+                        <span class="menu-title text-white">Shift overview (week view)</span>
                     </a>
                 </div>
 

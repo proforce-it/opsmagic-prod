@@ -60,15 +60,27 @@ a.disabled {
     color: #FFF;
 }
 
+.bg-confirm-past {
+    background-color: #eefaf3;
+    border: 1px solid #50ce89;
+    color: #50ce89;
+}
+
 .bg-invited {
     background-color: #a7e6c4;
     border: 1px solid #50ce89;
     color: #50ce89;
 }
 
-.bg-available {
+.bg-invited-past {
     background-color: #eefaf3;
     border: 1px solid #50ce89;
+    color: #50ce89;
+}
+
+.bg-available {
+    background-color: #eefaf3;
+    border: 2px solid #50ce89;
     color: #50ce89;
 }
 
@@ -78,10 +90,40 @@ a.disabled {
     color: #f2da82;
 }
 
+.bg-no-rtw {
+    background-color: #F1416C;
+    border: 1px solid #F1416C;
+    color: #FFF;
+}
+
+.bg-no-rtw-past {
+    background-color: #FFF;
+    border: 1px solid #F1416C;
+    color: #F1416C;
+}
+
 .confirm-text { color: #FFF; }
+.confirm-text-past { color: #50ce89; }
 .invited-text { color: #FFF; }
+.invited-text-past { color: #50ce89; }
 .available-text { color: #50ce89; }
 .o_job-text { color: #f2da82; }
+.bg-no-rtw-text { color: #FFF; }
+.bg-no-rtw-text-past { color: #F1416C; }
+
+.booking-green-no-border {
+    background-color: #eefaf3;
+    color: #50ce89;
+}
+.booking-gray-no-border {
+    background-color: #F4F4F4;
+}
+.bg-booking-gray {
+    background-color: #F4F4F4;
+    border: 1px solid #7e8299;
+    color: #7e8299;
+}
+.bg-booking-gray-text { color: #7e8299; }
 
 .kt_aside_toolbar{ border-bottom: 1px dotted #fff; }
 

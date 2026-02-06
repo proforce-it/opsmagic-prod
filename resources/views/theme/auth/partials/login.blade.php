@@ -66,6 +66,7 @@
                 </form>
                 <!--end::Form-->
             </div>
+            @include('theme.auth.partials.manage_version')
             <!--end::Wrapper-->
         </div>
         <!--end::Content-->

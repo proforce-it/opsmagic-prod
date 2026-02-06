@@ -46,6 +46,7 @@ class AuthController extends Controller
 
         $token = $worker->createToken('worker-api-token')->accessToken;
         $worker->token = $token;
+        $worker->fcm_token = $request->input('fcm_token');
         $worker->save();
 
         $country = Country::query()->where('id', $worker->nationality)->first();

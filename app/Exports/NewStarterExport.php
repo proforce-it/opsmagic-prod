@@ -56,6 +56,10 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
             'next_of_kin_relationship',
             'next_of_kin_email',
             'next_of_kin_phone',
+            'bank_account_name',
+            'bank_name',
+            'bank_sort_code',
+            'bank_account_number',
             'start_date'
         ];
     }
@@ -113,11 +117,11 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
                 ? $details['nationality_details']['opera_ethnic_code']
                 : '',
             $details['email_address'] ?? '',
-            $details['mobile_number'] ?? '',
+            preg_replace('/\D+/', '', $details['mobile_number'] ?? ''),
             isset($details['worker_cost_centres_with_name'])
-                ? collect($details['worker_cost_centres_with_name'])->pluck('cost_center_short_code')->join(', ')
+                ? collect($details['worker_cost_centres_with_name'])->pluck('cost_center_short_code')->first()
                 : '',
-            $details['national_insurance_number'] ?? '',
+            str_replace(' ', '', $details['national_insurance_number'] ?? ''),
             isset($details['marital_status'])
                 ? strtoupper(substr($details['marital_status'], 0, 1))
                 : '',
@@ -129,7 +133,9 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
                 : '',
             $details['latest_end_date_rights_to_work_details']['right_to_work_type'] ?? '',
             $rtwNumber,
-            $details['latest_end_date_rights_to_work_details']['end_date'] ?? '2199-12-31',
+            isset($details['latest_end_date_rights_to_work_details']['end_date'])
+                ? Carbon::parse($details['latest_end_date_rights_to_work_details']['end_date'])->format('d/m/Y')
+                : '31/12/2199',
             $addressLine1,
             $addressLine2,
             $city,
@@ -140,6 +146,10 @@ class NewStarterExport implements FromCollection, WithHeadings, WithMapping, Wit
             $details['next_of_kin_relationship'] ?? '',
             $details['next_of_kin_email'] ?? '',
             $details['next_of_kin_mobile'] ?? '',
+            $details['bank_account_name'] ?? '',
+            $details['bank_name'] ?? '',
+            $details['bank_ifsc_code'] ?? '',
+            $details['bank_account_number'] ?? '',
             isset($worker['first_working_date'])
                 ? Carbon::parse($worker['first_working_date'])->format('d/m/Y')
                 : ''

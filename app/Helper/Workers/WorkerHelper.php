@@ -151,7 +151,7 @@ class WorkerHelper
     }
 
     public static function automaticWorkerActive($workerId) {
-        $worker = Worker::query()->where('id', $workerId)->with(['worker_cost_center', 'rights_to_work_details', 'incomplete_rights_to_work_details', 'worker_documents', 'id_documents', 'accommodation_details'])
+        $worker = Worker::query()->where('id', $workerId)->with(['worker_cost_center', 'rights_to_work_details', 'incomplete_rights_to_work_details', 'worker_documents', 'id_documents', 'accommodation_details', 'worker_payroll_references'])
             ->first()
             ->toArray();
         if ($worker && $worker['status'] == 'Prospect') {

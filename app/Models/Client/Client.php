@@ -22,4 +22,8 @@ class Client extends Model
     public function client_site_details() {
         return $this->hasMany(Site::class, 'client_id', 'id');
     }
+
+    public function client_site_details_with_job() {
+        return $this->hasMany(Site::class, 'client_id', 'id')->with('job_details');
+    }
 }

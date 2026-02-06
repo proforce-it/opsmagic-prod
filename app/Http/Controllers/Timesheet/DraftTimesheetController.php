@@ -23,7 +23,7 @@ class DraftTimesheetController extends Controller
 
         $startTime = Carbon::parse($shift['start_time']);
         $endTime = Carbon::parse($shift['end_time']);
-        $hoursWorked = $endTime->floatDiffInHours($startTime);
+        $hoursWorked = $startTime->floatDiffInHours($endTime); //$endTime->floatDiffInHours($startTime);
 
         $clientJobWorker = ClientJobWorker::query()->where('job_id', $shift['job_id'])
             ->whereNotNull('confirmed_at')
@@ -88,7 +88,7 @@ class DraftTimesheetController extends Controller
             foreach ($confirmedWorker as $row) {
                 $startTime = Carbon::parse($row['jobShift']['start_time']);
                 $endTime = Carbon::parse($row['jobShift']['end_time']);
-                $hoursWorked = $endTime->floatDiffInHours($startTime);
+                $hoursWorked = $startTime->floatDiffInHours($endTime);
 
                 $insertArray[] = [
                     'job_shift_id'  => $job_shift_id,
@@ -117,7 +117,7 @@ class DraftTimesheetController extends Controller
             $validator = Validator::make($request->all(), [
                 'add_timesheet_worker' => 'required',
                 'add_timesheet_start_time' => 'required',
-                'add_hours_worked' => 'required|numeric',
+                'add_hours_worked' => 'required|numeric|min:0',
             ],[
                 'add_timesheet_worker.required' => 'The worker field is required.',
                 'add_timesheet_start_time.required' => 'The start time field is required.',
@@ -174,7 +174,7 @@ class DraftTimesheetController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'timesheet_id' => 'required',
-                'hours_worked' => 'required|numeric',
+                'hours_worked' => 'required|numeric|min:0',
                 'timesheet_start_time' => 'required|date_format:H:i',
             ]);
 

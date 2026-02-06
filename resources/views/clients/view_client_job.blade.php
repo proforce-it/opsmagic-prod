@@ -1,5 +1,5 @@
 @extends('theme.page')
-
+@php($view_type = \Illuminate\Support\Facades\Request::input('view_type'))
 @php($title = 'Job - '.$job['name'].' (ID '.$job['id'].')')
 @section('title', $title)
 @section('content')
@@ -34,7 +34,7 @@
             font-size: 15px;
         }
     </style>
-    <style>
+<!--    <style>
         .calendar-table {
             table-layout: fixed;
         }
@@ -46,7 +46,7 @@
         .calendar-table td {
             border: 1px solid #ddd;
         }
-    </style>
+    </style>-->
     <div class="d-flex flex-column flex-column-fluid" id="kt_content"> <!--content -->
         <!--begin::Post-->
         <div class="post d-flex flex-column-fluid" id="kt_post">
@@ -54,32 +54,12 @@
                 <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
                     <div class="post flex-column-fluid" id="kt_post"> <!--d-flex-->
                         <div id="kt_content_container" class=""> <!--container-xxl-->
-                            <div class="card mb-5">
-                                <div class="card-body py-4">
-                                    <div class="row">
-                                        <div class="col-8 d-flex align-items-center">
-                                            <div class="fs-1 fw-bold">
-                                                {{ $job['name']}} <span class="fw-normal">({{ $job['site_details']['site_name'] }})</span>
-                                                @if($job['archived'] == '1')
-                                                    (<span class="text-danger">Archived</span>)
-                                                @endif
-                                                <a href="{{ url('assignment-management?tag='.$job['client_id'].'.'.$job['site_id'].'.'.$job['id']) }}" class="fw-bold text-primary d-flex">
-                                                    <i class="fs-xxl-1 las la-calendar-day text-primary"></i> <span class="fs-4">view booking calender</span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="col-4 text-end">
-                                            @if($job['client_details']['company_logo'])
-                                                <img src="{{ asset('workers/client_document/'.$job['client_details']['company_logo']) }}" alt="No image." style="width: 300px; height: 100px; object-fit: contain; object-position: right;">
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
+                            @include('job.job_detail_page_card')
 
                             <ul class="nav ms-10">
                                 <li class="nav-item">
-                                    <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm active" data-bs-toggle="tab" href="#kt_table_widget_5_tab_1" id="basic_details_button">Basic details</a>
+                                    <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm active" data-bs-toggle="tab" href="#kt_table_widget_5_tab_1" id="basic_details_button">Job info</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_2" id="pay_rates_button">Pay rates</a>
@@ -94,11 +74,11 @@
                                     <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_11" id="groups_button">Groups</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_8" id="workers_transport">Associate transport</a>
+                                    <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_8" id="workers_transport">Transport</a>
                                 </li>
-                                <li class="nav-item">
+<!--                                <li class="nav-item">
                                     <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_10" id="worker_availability">Associate availability</a>
-                                </li>
+                                </li>-->
                                 <li class="nav-item">
                                     <a class="nav-link ms-1 btn btn-light-primary-custom btn-active btn-active-light-custom fw-bolder px-4 edthm" data-bs-toggle="tab" href="#kt_table_widget_5_tab_4" id="bookings_button">Bookings</a>
                                 </li>
@@ -491,7 +471,7 @@
                                             <!--end::Table-->
                                         </div>
 
-                                        @include('job.worker_availability')
+                                        {{--@include('job.worker_availability')--}}
 
                                         <div class="tab-pane fade" id="kt_table_widget_5_tab_4">
                                             <div class="table-responsive">
@@ -728,7 +708,7 @@
     </script>
 
     <script>
-        activeMenu('/client-management');
+        activeMenu('/job-management');
 
         let job_start_date = $("#job_start_date");
         job_start_date.flatpickr({
@@ -1313,7 +1293,7 @@
     @yield('choose_update_pay_rate_map_js')
     @yield('view_pay_rate_map_js')
     @yield('job_line_js')
-    @yield('worker_availability_js')
+    {{--@yield('worker_availability_js')--}}
     @yield('add_group_link_js')
     @yield('unlink_group_job_js')
 @endsection

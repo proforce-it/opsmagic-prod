@@ -1160,36 +1160,25 @@ class ClientController extends Controller
     }
 
     public function job_action($id, $client_id, $site_id, $archived) {
-        /*<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm" data-kt-quotation-table-filter="delete_row" id="delete_client_contact" data-contact_id="'.$id.'">
-                    <span class="svg-icon svg-icon-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M5 9C5 8.44772 5.44772 8 6 8H18C18.5523 8 19 8.44772 19 9V18C19 19.6569 17.6569 21 16 21H8C6.34315 21 5 19.6569 5 18V9Z" fill="black"></path>
-                            <path opacity="0.5" d="M5 5C5 4.44772 5.44772 4 6 4H18C18.5523 4 19 4.44772 19 5V5C19 5.55228 18.5523 6 18 6H6C5.44772 6 5 5.55228 5 5V5Z" fill="black"></path>
-                            <path opacity="0.5" d="M9 4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V4H9V4Z" fill="black"></path>
-                        </svg>
-                    </span>
-                </a>*/
-
         if ($archived == 0) {
             $action = '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action" id="archive_client_job" data-job_id="'.$id.'" data-status="1" data-text="You want to archive this job!" data-btn_text="Yes, archive!">
-                                <i class="fs-2 las la-archive"></i>
-                </a>';
+                <i class="fs-2 las la-archive"></i>
+            </a>';
         } else {
 
             $action = '<a href="javascript:;" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action" id="un_archive_client_job" data-job_id="'.$id.'"  data-status="0" data-text="You want to active this job!" data-btn_text="Yes, active!">
-                    <span class="svg-icon svg-icon-2">
-                        <i class="fs-2 las la-undo"></i>
-                    </span>
-                </a>';
+                <span class="svg-icon svg-icon-2">
+                    <i class="fs-2 las la-undo"></i>
+                </span>
+            </a>';
         }
 
-        $action .= '
-        <a href="'.url('assignment-management?tag='.$client_id.'.'.$site_id.'.'.$id).'" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="view_client_job" data-job_id="'.$id.'">
+        $action .= '<a href="'.url('assignment-management?tag='.$client_id.'.'.$site_id.'.'.$id).'" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="view_client_job" data-job_id="'.$id.'">
             <i class="fs-2 las la-calendar"></i>
         </a>
-        <a href="'.url('view-client-job/'.$id).'" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="view_client_job" data-job_id="'.$id.'">
-                         <i class="fs-2 las la-arrow-right"></i>
-                </a>';
+        <a href="'.url('view-client-job/'.$id.'?view_type=details').'" class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1" id="view_client_job" data-job_id="'.$id.'">
+            <i class="fs-2 las la-arrow-right"></i>
+        </a>';
 
 
         return $action;
@@ -1327,7 +1316,9 @@ class ClientController extends Controller
             ->toArray();
 
         $costCentre = CostCentre::query()->orderBy('short_code', 'asc')->get();
-        return view('clients.view_client_job', compact(['job', 'site', 'job_line', 'week_number', 'week_year', 'minDate', 'jobLineTextBox', 'group', 'linkedGroups', 'costCentre']));
+
+        $current_shift_id = JobHelper::get_shift_id($job['id']);
+        return view('clients.view_client_job', compact(['job', 'site', 'job_line', 'week_number', 'week_year', 'minDate', 'jobLineTextBox', 'group', 'linkedGroups', 'costCentre', 'current_shift_id']));
     }
 
     public function updateClientJobBasicDetails(Request $request) {
@@ -2265,7 +2256,24 @@ class ClientController extends Controller
         }
     }
 
-    public function getJobWorkerAvailability(Request $request) {
+    public function workerAvailability($id) {
+        $job = ClientJob::query()->where('id', $id)->with(['client_details', 'site_details', 'upcoming_pay_rate_details', 'pay_rate_multiple'])->first();
+        $site = Site::query()->where('client_id', $job['client_id'])->get();
+        $job_line = JobLine::withTrashed()->where('job_id', $id)->first();
+
+        $carbon = Carbon::now();
+        $week = $carbon->addWeek();
+        $week_number = $week->isoWeek;
+        $week_year = $week->isoWeekYear;
+
+        $minDate = JobHelper::validFromMinDate($id);
+        $jobLineTextBox = JobHelper::preparedJobLineTextBox($id);
+
+        $current_shift_id = JobHelper::get_shift_id($job['id']);
+        return view('job.view_worker_availability', compact(['job', 'site', 'job_line', 'week_number', 'week_year', 'minDate', 'jobLineTextBox', 'current_shift_id']));
+    }
+
+    public function OldgetJobWorkerAvailability(Request $request) {
         try {
             $params = $request->input();
 
@@ -2313,7 +2321,7 @@ class ClientController extends Controller
                 if ($jobShifts) {
                     $th = '<a href="'.url('view-job-shift/'.$jobShifts['id']).'" target="_blank" class="text-gray-600">
                             <i class="fs-1 las la-calendar-day me-1"></i>'.$startDate->copy()->addDays((int) $i)->format('D d').
-                          '</a><br><span class="fs-5 fw-normal">'.Carbon::parse($jobShifts['start_time'])->format('Hi').'/'.$jobShifts['shift_length_hr'].'h'.$jobShifts['shift_length_min'].'m</span><br>';
+                          '</a>';
                     $shiftTrueOrFalse = true;
                 } else {
                     $currentDateCarbon = Carbon::parse($currentDate);
@@ -2348,7 +2356,6 @@ class ClientController extends Controller
                 foreach ($clientJobWorker as $row) {
 
                     $fullName = $row['worker']['first_name'] . ' ' . $row['worker']['middle_name'] . ' ' . $row['worker']['last_name'];
-                    $dob = date('d/m/Y', strtotime($row['worker']['date_of_birth']));
                     $icon = '';
 
                     if ($row['worker']['worker_type'] === 'light') {
@@ -2356,7 +2363,16 @@ class ClientController extends Controller
                     } elseif ($row['worker']['worker_type'] === 'heavy') {
                         $icon = '<i class="las la-weight-hanging fs-5"></i>';
                     }
-                    $preparedRow['worker_detail'] = '<a href="'.url('view-worker-details/'.$row['worker']['id']).'" class="fw-bolder fs-6 p-2" target="_blank">' . $fullName . '</a><br><span class="fw-normal p-2">' . $dob . '</span><span>'.$icon.'</span>';
+
+                    $preparedRow['worker_detail'] = [
+                        'name' => $fullName,
+                        'id'   => $row['worker']['id'],
+                        'profile_pic' => ($row['worker']['profile_pic']) ? asset('workers/profile/'.$row['worker']['profile_pic']) : asset('assets/media/avatars/worker-square.png'),
+                        'nationality' => ($row['worker']['nationality_details']) ? $row['worker']['nationality_details']['name'] : '',
+                        'dob' => ($row['worker']) ? Carbon::parse($row['worker']['date_of_birth'])->format('d/m/Y') : '',
+                        'icon' => $icon,
+                    ];
+
                     for ($i = 0; $i < 7; $i++) {
                         $shiftDate = $startDate->copy()->addDays((int) $i)->format('Y-m-d');
 
@@ -2375,12 +2391,170 @@ class ClientController extends Controller
                 'recordsTotal'      => count($clientJobWorker),
                 'recordsFiltered'   => count($clientJobWorker),
                 'data'              => $array,
-                'worker_availability_tab_date' => Carbon::parse($pwData[$payroll_start_date_column])->format('D d M Y'),
+                'worker_availability_tab_date' => $week_number.' '.$week_year,
                 'table_th'          => $table_th,
                 'wa_week_number'    => $week_number,
                 'wa_week_year'      => $week_year,
 
             ];
+        } catch (\Exception $e) {
+            return self::responseWithError($e->getMessage());
+        }
+    }
+
+    public function getJobWorkerAvailability(Request $request)
+    {
+        try {
+            $params = $request->input();
+            $job_id = $params['job_id'];
+            $requestWeekNumber = $params['wa_week_number'];
+            $requestYear = $params['wa_week_year'];
+            $carbon = Carbon::now()->setISODate($requestYear, $requestWeekNumber);
+
+            $baseDate = isset($params['base_date'])
+                ? Carbon::parse($params['base_date'])
+                : Carbon::today();
+
+            if (($params['week_type'] ?? '') === 'next') {
+                $baseDate->addDays(7);
+                $carbon->addWeek();
+            }
+
+            if (($params['week_type'] ?? '') === 'previous') {
+                $baseDate->subDays(7);
+                $carbon->subWeek();
+            }
+
+            $week_number    = $carbon->isoWeek;
+            $week_year      = $carbon->isoWeekYear;
+
+            $centerDate     = $baseDate->copy();
+            $startDate      = $centerDate->copy()->subDays(6);
+
+            $table_th       = [];
+            $weekGroups     = [];
+            $today          = Carbon::today();
+            $currentWeekNo  = $today->weekOfYear + 1;
+
+            $pastWeekNo     = $today->weekOfYear;
+            $pastWeekStart  = $today->copy()->subWeek()->startOfWeek(Carbon::MONDAY)->format('Y-m-d');
+            $pastWeekEnd    = $today->copy()->subWeek()->endOfWeek(Carbon::SUNDAY)->format('Y-m-d');
+
+            $totalDay = 13;
+
+            for ($i = 0; $i < $totalDay; $i++) {
+                $currentDateCarbon = $startDate->copy()->addDays($i);
+                $currentDate = $currentDateCarbon->format('Y-m-d');
+                $weekNo = $currentDateCarbon->weekOfYear + 1;
+                $isCurrentWeek = ($weekNo === $currentWeekNo);
+
+                $jobShifts = JobShift::query()
+                    ->where('job_id', $job_id)
+                    ->whereDate('date', $currentDate)
+                    ->first();
+
+                if ($jobShifts) {
+                    $th = '<a href="'.url('view-job-shift/'.$jobShifts['id']).'" target="_blank">
+                        <i class="fs-3 las la-calendar-day me-1"></i>'.$currentDateCarbon->format('D d').'
+                      </a>';
+                    $shiftTrueOrFalse = true;
+                } else {
+                    if ($currentDateCarbon->lt($today)) {
+                        $th = '<i class="fs-3 las la-calendar-day me-1"></i>'.$currentDateCarbon->format('D d').'<br> <i class="fs-3 las la-plus-circle text-gray-500"></i>';
+                    } else {
+                        $th = '<i class="fs-3 las la-calendar-day me-1"></i>'.$currentDateCarbon->format('D d').'<br>
+                        <a href="javascript:;" id="create_job_shift_th_btn" data-create_shift_date="'.$currentDate.'">
+                            <i class="fs-3 las la-plus-circle text-primary"></i>
+                        </a>';
+                    }
+                    $shiftTrueOrFalse = false;
+                }
+
+                $table_th[] = [
+                    'title' => $th,
+                    'shiftTrueOrFalse' => $shiftTrueOrFalse,
+                    'confirm' => 0,
+                    'invited' => 0,
+                    'available' => 0,
+                    'date' => $currentDate,
+                ];
+
+                if (!isset($weekGroups[$weekNo])) {
+                    $weekGroups[$weekNo] = [
+                        'week_number'     => $weekNo,
+                        'count'           => 0,
+                        'is_current_week' => $isCurrentWeek,
+                    ];
+                }
+                $weekGroups[$weekNo]['count']++;
+            }
+
+            $query = ClientJobWorker::query()
+                ->where('job_id', $job_id)
+                ->whereNotNull('confirmed_at')
+                ->whereNull('archived_at')
+                ->whereNull('declined_at')
+                ->with(['worker', 'rightsToWork', 'absence']);
+
+            $clientJobWorker = $query->get()->toArray();
+            $array = [];
+
+            foreach ($clientJobWorker as $row) {
+                $icon = '';
+                if ($row['worker']['worker_type'] === 'light') {
+                    $icon = '<i class="las la-feather-alt fs-5"></i>';
+                } elseif ($row['worker']['worker_type'] === 'heavy') {
+                    $icon = '<i class="las la-weight-hanging fs-5"></i>';
+                }
+
+                $preparedRow['worker_detail'] = [
+                    'id' => $row['worker']['id'],
+                    'name' => trim($row['worker']['first_name'].' '.$row['worker']['last_name']),
+                    'dob' => Carbon::parse($row['worker']['date_of_birth'])->format('d/m/Y'),
+                    'profile_pic' => ($row['worker']['profile_pic']) ? asset('workers/profile/'.$row['worker']['profile_pic']) : asset('assets/media/avatars/worker-square.png'),
+                    'nationality' => ($row['worker']['nationality_details']) ? $row['worker']['nationality_details']['name'] : '',
+                    'icon' => $icon,
+                ];
+
+                $pastWeekMinutes = JobShiftWorker::query()
+                    ->leftJoin('job_shifts', 'job_shifts.id', '=', 'job_shift_workers.job_shift_id')
+                    ->where('job_shift_workers.worker_id', $row['worker_id'])
+                    ->whereNotNull('job_shift_workers.confirmed_at')
+                    ->whereNull('job_shift_workers.cancelled_at')
+                    ->whereNull('job_shift_workers.declined_at')
+                    ->whereBetween('job_shift_workers.shift_date', [$pastWeekStart, $pastWeekEnd])
+                    ->selectRaw('SUM(COALESCE(job_shift_workers.shift_length, job_shifts.shift_length)) as total_minutes')
+                    ->value('total_minutes');
+
+                $preparedRow['past_week_hrs_worked'] = round(($pastWeekMinutes ?? 0) / 60, 2);
+
+                for ($i = 0; $i < $totalDay; $i++) {
+                    $shiftDate = $startDate->copy()->addDays($i)->format('Y-m-d');
+
+                    $preparedRow['day_'.($i+1)] = JobHelper::getWorkerAvailabilityBox([
+                        'job_id' => $job_id,
+                        'shift_date' => $shiftDate,
+                        'worker_id' => $row['worker_id']
+                    ], $table_th[$i]);
+                }
+
+                $array[] = $preparedRow;
+            }
+
+            return [
+                'draw'              => 1,
+                'recordsTotal'      => count($clientJobWorker),
+                'recordsFiltered'   => count($clientJobWorker),
+                'data'              => $array,
+                'week_groups'       => array_values($weekGroups),
+                'table_th'          => $table_th,
+                'base_date'         => $centerDate->format('Y-m-d'),
+                'worker_availability_tab_date' => $week_number.' '.$week_year,
+                'wa_week_number'    => $week_number,
+                'wa_week_year'      => $week_year,
+                'pw_worked_hrs_title' => 'pw '.$pastWeekNo.'<br> HRS',
+            ];
+
         } catch (\Exception $e) {
             return self::responseWithError($e->getMessage());
         }

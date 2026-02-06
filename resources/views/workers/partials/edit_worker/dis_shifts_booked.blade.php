@@ -20,7 +20,7 @@
                             Download .csv
                         </a>
 
-                        <a href="javascript:;" id="manage_worker_shifts_btns" class="ms-5">
+                        <a href="javascript:;" id="manage_worker_shifts_btn" data-job_id="" class="ms-5">
                             <i class="fs-xxl-2qx las la-plus-circle text-primary"></i>
                         </a>
                     </div>
@@ -104,7 +104,7 @@
                                                 </select>
                                             </div>
                                             <button type="button" class="btn btn-primary btn-icon flex-shrink-0" id="manage_worker_shifts_form_submit_btn">Go</button>
-                                            <button type="button" class="btn btn-lg btn-primary me-3 float-end d-none disabled" data-kt-stepper-action="submit" name="manage_worker_shifts_form_process_btn" id="manage_worker_shifts_form_process_btn">
+                                            <button type="button" class="btn btn-lg btn-primary me-3 float-end disabled" data-kt-stepper-action="submit" name="manage_worker_shifts_form_process_btn" id="manage_worker_shifts_form_process_btn" style="display: none">
                                                 <span>Please wait...
                                                     <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
                                                 </span>
@@ -116,88 +116,6 @@
                             </div>
 
                             <div class="row manage_worker_shifts_table_section d-none" id="manage_worker_shifts_table_section">
-                                <div class="col-lg-6 border-end border-2 border-gray-300">
-                                    <div class="mb-5 fv-row fv-plugins-icon-container">
-                                        <table class="table align-middle table-row-dashed fs-6 gy-3 text-muted">
-                                            <thead>
-                                                <tr class="text-start text-dark fw-bolder fs-4 text-uppercase gs-0">
-                                                    <th>01-07 January</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Th. 01-01-2026</td>
-                                                    <td>box</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="col-lg-6">
-                                    <div class="mb-5 fv-row fv-plugins-icon-container">
-                                        <table class="table align-middle table-row-dashed fs-6 gy-3 text-muted">
-                                            <thead>
-                                            <tr class="text-start text-dark fw-bolder fs-4 text-uppercase gs-0">
-                                                <th>08-14 January</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            <tr>
-                                                <td>Th. 08-01-2026</td>
-                                                <td>box</td>
-                                            </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -278,95 +196,112 @@
             });
         });
 
-        $("#manage_worker_shifts_btn").on('click', function () {
-            $("#manage_worker_shifts_job_select_box").val('').trigger('change');
+        $(document).on('click', '#manage_worker_shifts_btn', function () {
+            let manage_worker_shifts_job_select_box = $("#manage_worker_shifts_job_select_box")
+            if ($(this).hasClass('disabled_manage_worker_shifts_job_select_box')) {
+                manage_worker_shifts_job_select_box.prop('disabled', true);
+                manage_worker_shifts_job_select_box.next('.select2').find('.select2-selection').css('background-color', '#e4e6ee');
+            } else {
+                manage_worker_shifts_job_select_box.prop('disabled', false);
+                manage_worker_shifts_job_select_box.next('.select2').find('.select2-selection').css('background-color', '');
+            }
+
+            manage_worker_shifts_job_select_box.val($(this).attr('data-job_id')).trigger('change');
+            $(".manage_worker_shifts_table_section").addClass('d-none');
+            $("#manage_worker_shifts_table_section").html('');
             $("#manage_worker_shifts_modal").modal('show');
         });
 
-        $("#cls_btn_manage_worker_shifts_modal").on('click', function (){
+        $("#cls_btn_manage_worker_shifts_modal").on('click', function () {
+            $("#manage_worker_shifts_job_select_box").val('').trigger('change');
+            $(".manage_worker_shifts_table_section").addClass('d-none');
+            $("#manage_worker_shifts_table_section").html('');
             $("#manage_worker_shifts_modal").modal('hide');
         });
 
         $("#manage_worker_shifts_job_select_box").on('change', function () {
-            if ($(this).val() !== '') {
-                $.ajax({
-                    type    : 'post',
-                    url     : '{{ url('get-next-14-day-shift') }}',
-                    data    : {
-                        _token : '{{ csrf_token() }}',
-                        job_id : $("#manage_worker_shifts_job_select_box").val(),
-                    },
-                    success: function (response) {
-                        if (response.code === 200) {
+            let manage_worker_shifts_job_select_box_id = $(this).val()
+            if (manage_worker_shifts_job_select_box_id !== '') {
+                get_next_14_day_shift(manage_worker_shifts_job_select_box_id);
+            }
+        });
 
+        function get_next_14_day_shift(manage_worker_shifts_job_select_box_id) {
+            $.ajax({
+                type    : 'post',
+                url     : '{{ url('get-next-14-day-shift') }}',
+                data    : {
+                    _token : '{{ csrf_token() }}',
+                    job_id : manage_worker_shifts_job_select_box_id,
+                    worker_id : '{{ $worker['id'] }}'
+                },
+                success: function (response) {
+                    if (response.code === 200) {
+                        $(".manage_worker_shifts_table_section").removeClass('d-none');
+                        $("#manage_worker_shifts_table_section").html(response.data.html);
+
+                        const tooltipTriggerList = [].slice.call(
+                            document.querySelectorAll('#manage_worker_shifts_modal [data-bs-toggle="tooltip"]')
+                        );
+
+                        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                            new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function (response) {
+                    toastr.error(response.statusText);
+                }
+            });
+        }
+
+        $("#manage_worker_shifts_form_submit_btn").on('click', function () {
+            let worker_availability_action_type = $("#worker_availability_action_type_box").val();
+            let worker_availability_checked_worker = [];
+
+            $('input[name="worker_availability_checkbox"]:checked').each(function() {
+                worker_availability_checked_worker.push($(this).val());
+            });
+
+            if (worker_availability_action_type === '') {
+                toastr.error('Please select a action.')
+            } else if(worker_availability_checked_worker.length === 0) {
+                toastr.error('Please select a workers.')
+            } else {
+                $("#manage_worker_shifts_form_submit_btn").hide();
+                $("#manage_worker_shifts_form_process_btn").show();
+
+                $.ajax({
+                    type : 'post',
+                    url : '{{ url('action-on-worker-availability') }}',
+                    data : {
+                        _token : '{{ csrf_token() }}',
+                        worker_availability_action_type : worker_availability_action_type,
+                        worker_availability_checked_worker : worker_availability_checked_worker,
+                    },
+                    success : function (response) {
+
+                        $("#manage_worker_shifts_form_submit_btn").show();
+                        $("#manage_worker_shifts_form_process_btn").hide();
+
+                        if(response.code === 200) {
+                            toastr.success(response.message);
+                            $("#worker_availability_action_type_box").val('').trigger('change');
+                            get_next_14_day_shift($("#manage_worker_shifts_job_select_box").val());
                         } else {
                             toastr.error(response.message);
                         }
                     },
-                    error: function (response) {
+                    error   : function (response) {
+                        $("#manage_worker_shifts_form_submit_btn").show();
+                        $("#manage_worker_shifts_form_process_btn").hide();
+
                         toastr.error(response.statusText);
                     }
                 });
             }
         });
-
-        /*$("#worker_job_form").on('submit', function (e) {
-            $(".error").html('');
-            e.preventDefault();
-
-            let client = $("#client").val();
-            let site = $("#site").val();
-            let job = $("#job").val();
-
-            if(client === '')
-                $("#client_error").empty().append('The client field is required.');
-
-            if(site === '')
-                $("#site_error").empty().append('The site field is required.');
-
-            if(job === '')
-                $("#job_error").empty().append('The job field is required.');
-
-            if(client !== '' && site !== '' && job !== '') {
-
-                $("#client_job_worker_form_submit").hide();
-                $("#client_job_worker_form_process").show();
-
-                $.ajax({
-                    type        : 'post',
-                    url         : '{{ url('store-client-job-worker-multiple') }}',
-                    data        : {
-                        _token          : '{{ @csrf_token() }}',
-                        job_worker_name : ["{{ $worker['id'] }}"],
-                        invitation_type : $("input[name='invitation_type']:checked").val(),
-                        job_worker_id   : job,
-                        add_type        : 'single',
-                    },
-                    success     : function (response) {
-                        decodeResponse(response)
-
-                        $("#client_job_worker_form_submit").show();
-                        $("#client_job_worker_form_process").hide();
-
-                        if(response.code === 200) {
-                            jobs_table.ajax.reload();
-
-                            $("#client").val('').trigger('change');
-                            $("#site").val('').trigger('change');
-                            $("#job").val('').trigger('change');
-
-                            $("input[name='invitation_type']").first().prop("checked", true);
-                            $("#add_to_job_modal").modal('hide');
-                        }
-                    },
-                    error   : function (response) {
-                        $("#client_job_worker_form_submit").show();
-                        $("#client_job_worker_form_process").hide();
-
-                        toastr.error(response.statusText);
-                    }
-                });
-            }
-        });*/
     </script>
 @endsection

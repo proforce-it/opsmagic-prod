@@ -1,49 +1,4 @@
 <div class="card mb-5">
-<!--    <div class="card-body py-4">
-        <div class="table-responsive">
-            <div class="p-5">
-                <div class="fv-row">
-                    <div class="row">
-                        <div class="col-lg-6">
-                            <div class="fv-row fv-plugins-icon-container">
-                                <label for="job_default_shift_time" class="fs-6 fw-bold required">Shift start time</label>
-                                <div class="position-relative d-flex align-items-center">
-                                        <span class="svg-icon svg-icon-2 position-absolute mx-4">
-                                            <i class="fs-2 las la-clock"></i>
-                                        </span>
-                                    <input class="form-control ps-12 flatpickr-input time_input bg-secondary text-gray-500" placeholder="Select shift start time" name="shift_start_time" id="shift_start_time" type="text" readonly="readonly" value="{{ $shift['start_time'] }}">
-                                </div>
-                                <span class="text-danger error" id="shift_start_time_error"></span>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="fv-row fv-plugins-icon-container">
-                                <label for="job_default_shift_length_hr" class="fs-6 fw-bold required">Shift length</label>
-                                <div class="input-group">
-                                    <input class="form-control bg-secondary text-gray-500" name="shift_length_hr" id="shift_length_hr" type="text" value="{{ $shift['shift_length_hr'] }}" readonly="readonly">
-                                    <div class="input-group-prepend"><span class="input-group-text bg-secondary text-gray-500">hr</span></div>
-                                </div>
-                                <span class="text-danger error" id="shift_length_hr_error"></span>
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <div class="fv-row fv-plugins-icon-container">
-                                <label for="job_default_shift_length_min" class="fs-6 fw-bold"></label>
-                                <div class="input-group">
-                                    <input class="form-control bg-secondary text-gray-500" name="shift_length_min" id="shift_length_min" type="text" value="{{ $shift['shift_length_min'] }}" readonly="readonly">
-                                    <div class="input-group-prepend"><span class="input-group-text bg-secondary text-gray-500">min</span></div>
-                                </div>
-                                <span class="text-danger error" id="shift_length_min_error"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>-->
-</div>
-
-<div class="card mb-5">
     <div class="card-body py-4">
         <div class="table-responsive">
             <div class="p-5">
@@ -82,13 +37,8 @@
                                                                  @if($cow['job_line_details'])
                                                                     <span class="p-1 rounded-1 fw-bold {{ $cow['job_line_details']['color_code'] }}-border ms-2">{{ $cow['job_line_details']['line_code'] }}</span>
                                                                 @endif
-{{--                                                                <i class="las la-calendar-check fs-1"></i> {{ $cow['confirmed_shifts_count'] }} &nbsp;--}}
                                                                     <i class="las la-clock fs-5 me-1 ms-2"></i> {{ date('H:i', strtotime($cow['start_time'] ?? $shift['start_time'])) }}
                                                                     <i class="las la-hourglass-half fs-5 me-1 ms-2"></i>{{ $cow['duration'] ?? $shift['shift_length_hr'].'.'.$shift['shift_length_min'] }}hrs
-
-{{--                                                                <i class="las la-user-circle fs-1"></i>--}}
-{{--                                                                @php($cow_latestRTWExpiryDate = \App\Helper\Workers\RightToWorkHelper::getLatestDate($cow['rights_to_work']))--}}
-{{--                                                                {{ ($cow_latestRTWExpiryDate) ? date('d-m-Y', strtotime($cow_latestRTWExpiryDate)) : '-' }}--}}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -120,11 +70,6 @@
                                                                 @endif
                                                                     <i class="las la-clock fs-5 me-1 ms-2"></i> {{ date('H:i', strtotime($pw['start_time'] ?? $shift['start_time'])) }}
                                                                     <i class="las la-hourglass-half fs-5 me-1 ms-2"></i>{{ $pw['duration'] ?? $shift['shift_length_hr'].'.'.$shift['shift_length_min'] }}hrs
-
-{{--                                                                <i class="las la-calendar-check fs-1"></i> {{ $pw['confirmed_shifts_count'] }} &nbsp;--}}
-{{--                                                                <i class="las la-user-circle fs-1"></i>--}}
-{{--                                                                @php($pw_latestRTWExpiryDate = \App\Helper\Workers\RightToWorkHelper::getLatestDate($pw['rights_to_work']))--}}
-{{--                                                                {{ ($pw_latestRTWExpiryDate) ? date('d-m-Y', strtotime($pw_latestRTWExpiryDate)) : '-' }}--}}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -173,10 +118,6 @@
                                                                     <span class="p-1 rounded-1 fw-bold {{ $cw['job_line_details']['color_code'] }}-border ms-2">{{ $cw['job_line_details']['line_code'] }}</span>
                                                                 @endif
                                                                 <i class="las la-thumbs-down fs-5 me-1 ms-2 u-flip"></i> <span class="me-1">{{\Illuminate\Support\Carbon::parse($cw['cancelled_at'])->format('d-m-y')}}</span><span>{{ date('H:i', strtotime($cw['start_time'] ?? $shift['start_time'])) }}</span>
-
-{{--                                                                <i class="las la-user-circle fs-1"></i>--}}
-{{--                                                                @php($cw_latestRTWExpiryDate = \App\Helper\Workers\RightToWorkHelper::getLatestDate($cw['rights_to_work']))--}}
-{{--                                                                {{ ($cw_latestRTWExpiryDate) ? date('d-m-Y', strtotime($cw_latestRTWExpiryDate)) : '-' }}--}}
                                                             </span>
                                                         </div>
                                                     </div>

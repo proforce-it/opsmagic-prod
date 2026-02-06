@@ -39,13 +39,11 @@ class DashboardController extends Controller
                 })
                 ->with('jobShift.client_job_details.client_details')
                 ->with('jobShift.client_job_details.site_details')
-                ->get();
+                ->first();
 
             $confirmShiftNode = [];
             if ($confirmShift) {
-                foreach ($confirmShift as $cs) {
-                    $confirmShiftNode[] = $this->preparedDashboardShiftData($cs);
-                }
+                $confirmShiftNode[] = $this->preparedDashboardShiftData($confirmShift);
             }
 
             $cancelledShift = JobShiftWorker::query()

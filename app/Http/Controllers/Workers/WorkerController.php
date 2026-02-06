@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Workers;
 
 use App\Helper\Activity\ActivityLogs;
 use App\Helper\File\FileHelper;
+use App\Helper\Job\JobHelper;
 use App\Helper\Location\CountryHelper;
 use App\Helper\Location\StateHelper;
 use App\Helper\Workers\RightToWorkHelper;
@@ -2000,7 +2001,7 @@ class WorkerController extends Controller
                         'confirmed_at'  => ($row['confirmed_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['confirmed_at'])).'"><i class="bi bi-circle-fill text-success"></i></a>' : '<i class="bi bi-circle"></i>',
                         'declined_at'   => ($row['declined_at']) ? '<a href="javascript:;" title="'.date('d-m-Y H:i:s', strtotime($row['declined_at'])).'"><i class="bi bi-circle-fill text-danger"></i></a>' : '<i class="bi bi-circle"></i>',
                         'no_shift'      => $shiftsCount,
-                        'action'        => $this->job_action($row['id'], $row['archived_at'], $row['job_id'], $worker_name, $row['worker_id'], $job_name),
+                        'action'        => $this->job_action($row['id'], $row['archived_at'], $row['confirmed_at'], $row['job_id'], $worker_name, $row['worker_id'], $job_name),
                     ];
                 }
             }
@@ -2015,9 +2016,9 @@ class WorkerController extends Controller
         }
     }
 
-    public function job_action($id, $archived, $job_id, $worker_name, $worker_id, $job_name) {
+    public function job_action($id, $archived, $confirmed, $job_id, $worker_name, $worker_id, $job_name) {
         $action = '';
-        if ($archived == null) {
+        if ($archived == null && $confirmed != null) {
             $action .= '<a href="javascript:;"
                 class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 archive_action"
                 id="archive_job_worker"
@@ -2027,6 +2028,13 @@ class WorkerController extends Controller
                 data-job_name="'.$job_name.'"
                 data-job_id="'.$job_id.'">
                    <i class="fs-2 las la-unlink"></i>
+                </a>';
+
+            $action .= '<a href="javascript:;"
+                class="btn btn-icon btn-bg-light btn-active-color-info btn-sm me-1 disabled_manage_worker_shifts_job_select_box"
+                id="manage_worker_shifts_btn"
+                data-job_id="'.$job_id.'">
+                   <i class="fs-2 las la-calendar-plus"></i>
                 </a>';
         }
 
@@ -2085,6 +2093,67 @@ class WorkerController extends Controller
             ];
         } catch (\Exception $e) {
             return self::responseWithError($e->getMessage());
+        }
+    }
+
+    public function getNext14DayShift(Request $request) {
+        try {
+            $startDate = Carbon::now()->addDay();
+            $totalDays = 14;
+            $chunkSize = 7;
+
+            $weeks = [];
+            for ($i = 0; $i < $totalDays; $i++) {
+                $weeks[floor($i / $chunkSize)][] = $startDate->copy()->addDays($i);
+            }
+
+            $html = '<div class="row">';
+
+            foreach ($weeks as $weekIndex => $weekDates) {
+
+                $weekStart = $weekDates[0]->format('d');
+                $weekEnd   = end($weekDates)->format('d F');
+
+                $html .= '<div class="col-lg-6 '.($weekIndex === 0 ? 'border-end border-2 border-gray-300' : '').'">
+                    <div class="mb-5 fv-row fv-plugins-icon-container">
+                        <table class="table align-middle table-row-dashed fs-4 gy-3 text-muted">
+                            <thead>
+                                <tr class="text-start text-dark fw-bolder fs-3 text-uppercase gs-0">
+                                    <th class="ps-4" colspan="2">'.$weekStart.'–'.$weekEnd.'</th>
+                                </tr>
+                            </thead>
+                        <tbody>';
+
+                foreach ($weekDates as $date) {
+                    $workerAvailabilityBox = JobHelper::getWorkerAvailabilityBoxInTableController([
+                       'job_id' => $request->input('job_id'),
+                       'shift_date' => $date->format('Y-m-d'),
+                       'worker_id' => $request->input('worker_id')
+                   ]);
+
+                    $html .= '<tr>
+                        <td class="ps-4 text-uppercase fw-bold">'.$date->format('D. d-m-Y').'</td>
+                        <td class="ps-4">'.$workerAvailabilityBox.'</td>
+                    </tr>';
+                }
+
+                $html .= '</tbody>
+                        </table>
+                    </div>
+                </div>';
+            }
+
+            $html .= '</div>';
+
+            return self::responseWithSuccess('Next 14 days shift.', [
+                'html' => $html
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => 500,
+                'message' => $e->getMessage()
+            ]);
         }
     }
 

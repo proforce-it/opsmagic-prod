@@ -243,7 +243,7 @@ class WorkerSearchController extends Controller
         $valid_right_to_work = $params['valid_right_to_work'] ?? null;
 
         return Worker::query()
-            ->with(['rights_to_work_details', 'clientJobWorkers', 'leaverLog', 'last_working_log', 'timesheet_detail', 'worker_cost_center', 'id_documents', 'incomplete_rights_to_work_details', 'worker_documents']) /*jobShiftWorker*/
+            ->with(['rights_to_work_details', 'clientJobWorkers', 'leaverLog', 'last_working_log', 'timesheet_detail', 'worker_cost_center', 'id_documents', 'incomplete_rights_to_work_details', 'worker_documents', 'worker_payroll_references']) /*jobShiftWorker*/
             ->where(function($query) use ($name_email_id) {
                 $query->where('worker_no', $name_email_id)
                     ->orWhere(function($query) use ($name_email_id) {

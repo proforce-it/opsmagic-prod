@@ -121,6 +121,7 @@ Route::middleware('auth')->group(function(){
     Route::get('/delete-document-action/{id}', [App\Http\Controllers\Workers\WorkerController::class, 'deleteDocumentAction']);
     Route::post('/get-worker-assigned-jobs', [App\Http\Controllers\Workers\WorkerController::class, 'getWorkerAssignedJobs']);
     Route::post('/get-worker-shifts-booked', [App\Http\Controllers\Workers\WorkerController::class, 'getWorkerShiftsBooked']);
+    Route::post('/get-next-14-day-shift', [App\Http\Controllers\Workers\WorkerController::class, 'getNext14DayShift']);
     Route::post('/get-worker-shifts-worked', [App\Http\Controllers\Workers\WorkerController::class, 'getWorkerShiftsWorked']);
     Route::post('/worker-status-bulk-action', [App\Http\Controllers\Workers\WorkerController::class, 'workerStatusBulkAction']);
     Route::post('/upload-worker-profile-pic', [App\Http\Controllers\Workers\WorkerController::class, 'uploadWorkerProfilePic']);
@@ -183,6 +184,7 @@ Route::middleware('auth')->group(function(){
     Route::get('/archive-client-job-worker/{id}', [App\Http\Controllers\Clients\ClientController::class, 'archiveClientJobWorker']);
     Route::get('/un-archive-client-job-worker/{id}', [App\Http\Controllers\Clients\ClientController::class, 'unArchiveClientJobWorker']);
     Route::get('/confirm-client-job-worker-admin/{id}/{confirm_by}/{status}', [App\Http\Controllers\Clients\ClientController::class, 'confirmClientJobWorkerAdmin']);
+    Route::get('/worker-availability/{id}', [App\Http\Controllers\Clients\ClientController::class, 'workerAvailability'])->name('client-management_view-worker-availability');
     Route::post('/get-job-worker-availability', [App\Http\Controllers\Clients\ClientController::class, 'getJobWorkerAvailability']);
     Route::post('/action-on-worker-availability', [App\Http\Controllers\Clients\ClientController::class, 'actionOnWorkerAvailability']);
     Route::post('/get-client-job-worker-future-confirm-and-invitation-shift', [App\Http\Controllers\Clients\ClientController::class, 'getClientJobWorkerFutureConfirmAndInvitationShift']);
@@ -296,9 +298,16 @@ Route::middleware('auth')->group(function(){
     Route::post('/update-primary-contact',[App\Http\Controllers\Clients\ClientController::class,'updateClientPrimaryContact']);
     Route::post('/update-client-pay-details', [App\Http\Controllers\Clients\ClientController::class, 'updateClientPayDetails']);
 
-    Route::get('/shift-overview', [App\Http\Controllers\Job\ShiftOverviewController::class, 'index'])->name('dashboard_booking-overview');
+    Route::get('/shift-overview', [App\Http\Controllers\Job\ShiftOverviewController::class, 'index'])->name('dashboard_shift-overview');
     Route::post('/change-week', [App\Http\Controllers\Job\ShiftOverviewController::class, 'changeWeek']);
     Route::post('/get-job-shift-overview', [App\Http\Controllers\Job\ShiftOverviewController::class, 'getJobShiftOverview']);
+
+    Route::get('/booking-overview', [App\Http\Controllers\Job\BookingOverviewController::class, 'index'])->name('dashboard_booking-overview');
+    Route::post('/change-week-booking-overview', [App\Http\Controllers\Job\BookingOverviewController::class, 'changeWeekBookingOverview']);
+    Route::post('/get-booking-overview', [App\Http\Controllers\Job\BookingOverviewController::class, 'getBookingOverview']);
+
+    Route::get('/booking-overview-by-client/{id}', [App\Http\Controllers\Job\BookingOverviewController::class, 'bookingOverviewByClient'])->name('dashboard_booking-overview-by-client');
+    Route::post('/get-booking-overview-by-client', [App\Http\Controllers\Job\BookingOverviewController::class, 'getBookingOverviewByClient']);
 
     Route::get('/accommodation-list', [App\Http\Controllers\Accommodation\AccommodationController::class, 'index'])->name('dashboard_accommodation-list');
     Route::post('/get-accommodation', [App\Http\Controllers\Accommodation\AccommodationController::class, 'getAccommodation']);
